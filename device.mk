@@ -43,6 +43,13 @@ $(call inherit-product, frameworks/native/build/phone-xhdpi-6144-dalvik-heap.mk)
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
 
+# Ramdisk fstab for first stage mount
+PRODUCT_COPY_FILES += \
+    $(DEVICE_PATH)/init/fstab.kebab:$(TARGET_COPY_OUT_RAMDISK)/system/etc/fstab.kebab \
+    $(DEVICE_PATH)/init/fstab.kebab:$(TARGET_COPY_OUT_RAMDISK)/fstab.kebab \
+    $(DEVICE_PATH)/init/fstab.kebab:$(TARGET_COPY_OUT_RAMDISK)/system/etc/fstab.qcom \
+    $(DEVICE_PATH)/init/fstab.kebab:$(TARGET_COPY_OUT_RAMDISK)/fstab.qcom
+
 # Recovery helpers
 PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/init/firmware_mount_bind.sh:$(TARGET_COPY_OUT_RECOVERY)/root/system/bin/firmware_mount_bind.sh \
