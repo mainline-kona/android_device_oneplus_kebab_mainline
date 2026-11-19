@@ -15,6 +15,7 @@ TARGET_GRAPHICS_EGL := mesa
 TARGET_GRAPHICS_VULKAN := mesa
 BOARD_MESA3D_USES_MESON_BUILD := true
 LINEAGE_BUILD := true
+TARGET_FOLLOWS_LATEST_VINTF_TARGET_LEVEL := true
 
 include device/mainline/qcom-common/BoardConfigMainlineQcomCommon.mk
 
@@ -112,3 +113,6 @@ TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
 
 # SELinux
 BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
+
+# VINTF
+DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/configs/manifest_security.xml
