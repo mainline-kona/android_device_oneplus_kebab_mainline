@@ -58,7 +58,9 @@ PRODUCT_PACKAGES += \
     KebabMainlineOPlusFrameworksResTarget \
     KebabMainlineOPlusSettingsProviderResTarget \
     KebabMainlineOPlusSettingsResTarget \
-    KebabMainlineOPlusSystemUIResTarget
+    KebabMainlineOPlusSystemUIResTarget \
+    KebabMainlineTelephonyResTarget \
+    KebabMainlineWifiResTarget
 
 # Scoped storage
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
