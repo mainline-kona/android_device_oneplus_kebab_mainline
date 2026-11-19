@@ -13,3 +13,8 @@
 
 # QSEE apps outside QTEE's object interface
 /dev/qseecom_bridge                                       u:object_r:tee_device:s0
+
+# Telephony (external SDX55 over MHI)
+/vendor/bin/hw/libcuttlefish-rild                         u:object_r:rild_exec:s0
+/dev/wwan0at[0-9]+                                        u:object_r:radio_device:s0
+/dev/wwan0qmi[0-9]+                                       u:object_r:radio_device:s0
