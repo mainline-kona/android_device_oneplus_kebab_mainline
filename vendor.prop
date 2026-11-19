@@ -1,0 +1,23 @@
+#
+# Copyright (C) 2026 The PenguinOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# Bring-up & SurfaceFlinger
+ro.surface_flinger.max_frame_buffer_acquired_buffers=3
+
+# Light
+vendor.light.backlight.disable=false
+
+# Bluetooth
+bluetooth.device.default_name=OnePlus 8T
+
+# USB
+vendor.usb.product_string=OnePlus 8T
+
+# Crypto / FBE
+ro.crypto.volume.filenames_mode=aes-256-cts
+ro.crypto.volume.metadata.method=dm-default-key
+
+# APEX
+apexd.config.dm_create.timeout=10000
