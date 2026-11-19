@@ -36,6 +36,11 @@ $(call inherit-product, frameworks/native/build/phone-xhdpi-6144-dalvik-heap.mk)
 # Dynamic partitions
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 
+# Init
+PRODUCT_PACKAGES += \
+    fstab.kebab \
+    fstab.kebab.vendor_ramdisk
+
 PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
 
 # Scoped storage
