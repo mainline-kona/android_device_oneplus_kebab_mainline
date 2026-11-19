@@ -39,7 +39,8 @@ PRODUCT_USE_DYNAMIC_PARTITIONS := true
 # Init
 PRODUCT_PACKAGES += \
     fstab.kebab \
-    fstab.kebab.vendor_ramdisk
+    fstab.kebab.vendor_ramdisk \
+    ueventd.kebab.rc
 
 PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
 

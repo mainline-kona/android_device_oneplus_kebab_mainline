@@ -12,3 +12,9 @@ prebuilt_etc {
     vendor: true,
     vendor_ramdisk_available: true,
 }
+
+prebuilt_etc {
+    name: "ueventd.kebab.rc",
+    src: "init/ueventd.kebab.rc",
+    vendor: true,
+}

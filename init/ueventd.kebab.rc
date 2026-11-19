@@ -1,0 +1,14 @@
+#
+# Copyright (C) 2026 The PenguinOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+firmware_directories /vendor/firmware/
+
+# Modem AT ports
+/dev/wwan0at*             0660   radio      radio
+
+# Fingerprint (Goodix control node, QTEE for its trusted app)
+/dev/goodix_fp             0660   system     system
+/dev/tee0                  0660   system     system
+/dev/qseecom_bridge        0660   system     system
