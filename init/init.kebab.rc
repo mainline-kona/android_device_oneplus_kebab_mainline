@@ -1,0 +1,29 @@
+#
+# Copyright (C) 2026 The PenguinOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+import /vendor/etc/init/hw/init.mainline.qcom.rc
+
+on early-init
+    # UFS controller symlink for bootdevice
+    symlink /dev/block/platform/soc@0/1d84000.ufshc /dev/block/bootdevice
+
+on init
+    # qseecomd bridge for stock KeyMint & Gatekeeper
+    symlink /dev/qseecom_bridge /dev/qseecom
+    # UFS RPMB well-known LU and query node for RPMB listener
+    chown system system /dev/0:0:0:49476
+    chmod 0660 /dev/0:0:0:49476
+    chown system system /dev/ufs-bsg0
+    chmod 0660 /dev/ufs-bsg0
+    symlink /dev/dma_heap/system /dev/dma_heap/qcom,qseecom
+
+on fs
+    mount_all --early
+
+on late-fs
+    mount_all --late
+
+on post-fs
+    trigger start_all_remoteproc

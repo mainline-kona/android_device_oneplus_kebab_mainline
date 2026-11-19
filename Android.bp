@@ -18,3 +18,10 @@ prebuilt_etc {
     src: "init/ueventd.kebab.rc",
     vendor: true,
 }
+
+prebuilt_etc {
+    name: "init.kebab.rc",
+    src: "init/init.kebab.rc",
+    sub_dir: "init/hw",
+    vendor: true,
+}
