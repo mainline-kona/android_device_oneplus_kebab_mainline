@@ -55,7 +55,8 @@ PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
 PRODUCT_PACKAGES += \
     KebabMainlineFrameworksResTarget \
     KebabMainlineKeyHandlerResTarget \
-    KebabMainlineOPlusFrameworksResTarget
+    KebabMainlineOPlusFrameworksResTarget \
+    KebabMainlineOPlusSystemUIResTarget
 
 # Scoped storage
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
