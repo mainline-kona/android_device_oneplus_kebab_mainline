@@ -4,9 +4,8 @@
 #
 
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/kebab_mainline.mk
+    $(LOCAL_DIR)/lineage_kebab_mainline.mk
 
 COMMON_LUNCH_CHOICES := \
-    kebab_mainline-trunk_staging-userdebug \
-    kebab_mainline-userdebug \
-    kebab_mainline-eng
+    lineage_kebab_mainline-cp2a-userdebug \
+    lineage_kebab_mainline-trunk_staging-userdebug
