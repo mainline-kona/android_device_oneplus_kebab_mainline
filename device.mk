@@ -88,6 +88,10 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
 
+# Media
+PRODUCT_COPY_FILES += \
+    $(DEVICE_PATH)/media/media_codecs_c2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_c2.xml
+
 # Overlays
 PRODUCT_PACKAGES += \
     KebabMainlineFrameworksResTarget \
