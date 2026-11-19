@@ -56,6 +56,8 @@ PRODUCT_PACKAGES += \
     KebabMainlineFrameworksResTarget \
     KebabMainlineKeyHandlerResTarget \
     KebabMainlineOPlusFrameworksResTarget \
+    KebabMainlineOPlusSettingsProviderResTarget \
+    KebabMainlineOPlusSettingsResTarget \
     KebabMainlineOPlusSystemUIResTarget
 
 # Scoped storage
