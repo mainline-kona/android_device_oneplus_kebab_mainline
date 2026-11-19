@@ -38,6 +38,7 @@ PRODUCT_USE_DYNAMIC_PARTITIONS := true
 
 # Init
 PRODUCT_PACKAGES += \
+    bringup-log.sh \
     fstab.kebab \
     fstab.kebab.vendor_ramdisk \
     init.kebab.rc \

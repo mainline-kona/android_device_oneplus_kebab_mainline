@@ -27,3 +27,19 @@ on late-fs
 
 on post-fs
     trigger start_all_remoteproc
+    start vendor.bringup_kmsg
+    start vendor.bringup_logcat
+
+service vendor.bringup_kmsg /vendor/bin/bringup-log.sh kmsg
+    user root
+    group root
+    seclabel u:r:su:s0
+    oneshot
+    disabled
+
+service vendor.bringup_logcat /vendor/bin/bringup-log.sh logcat
+    user root
+    group root log
+    seclabel u:r:su:s0
+    oneshot
+    disabled
