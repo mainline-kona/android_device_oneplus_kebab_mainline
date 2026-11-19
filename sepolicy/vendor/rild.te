@@ -6,6 +6,7 @@
 # AT (wwan0at0) and QMI (wwan0qmi0) ports of the external SDX55
 allow rild radio_device:chr_file rw_file_perms;
 allow rild self:capability { net_admin net_raw };
+allow rild self:capability2 block_suspend;
 
 # kebab-dataconn runs in rild's domain: find the mhi_hwip netdev, set MTU/up
 allow rild vendor_file:file rx_file_perms;

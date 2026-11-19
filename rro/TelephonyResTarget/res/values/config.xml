@@ -5,10 +5,11 @@
 -->
 <resources>
 
-    <!-- String indicating the package name of the device ImsService implementation for MMTEL. -->
-    <string name="config_ims_mmtel_package" translatable="false">org.codeaurora.ims</string>
+    <!-- MMTEL: the open AOSP ImsStack package (org.codeaurora.ims is proprietary
+         and absent from this build). -->
+    <string name="config_ims_mmtel_package" translatable="false">com.android.imsstack</string>
 
-    <!-- String indicating the package name of the device ImsService implementation for RCS. -->
-    <string name="config_ims_rcs_package" translatable="false">vendor.qti.imsrcs</string>
+    <!-- RCS: no open implementation is shipped yet. -->
+    <string name="config_ims_rcs_package" translatable="false">com.android.imsstack</string>
 
 </resources>

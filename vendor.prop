@@ -16,10 +16,34 @@ bluetooth.device.default_name=OnePlus 8T
 vendor.usb.product_string=OnePlus 8T
 
 # Radio: LTE/NR preferred (NR_LTE_GSM_WCDMA)
-ro.telephony.default_network=33
+ro.telephony.default_network=33,33
+
+# Radio: dump every QMI frame (RIL + kebab-dataconn) to logcat/kmsg.
+# Set to 0 to keep only the per-transaction result/timeout lines.
+persist.vendor.radio.qmi_trace=1
+
+# Radio: IMS automatic bring-up and stock ground-truth parameters
+persist.vendor.kebab.ims_apn_type=1
+persist.radio.is_vonr_enabled_0=true
+persist.vendor.radio.apm_sim_not_pwdn=1
+persist.vendor.radio.custom_ecc=1
+persist.vendor.radio.procedure_bytes=SKIP
+persist.vendor.radio.rat_on=combine
+persist.vendor.radio.sib16_support=1
 
 # Gatekeeper
 vendor.gatekeeper.is_security_level_spu=0
 
 # APEX
 apexd.config.dm_create.timeout=10000
+
+# Audio HAL voice service: intentionally empty. The RIL owns the CS-VOICE
+# helper because the modem inspects the AP voice graph before the call is set
+# up; a HAL-started second instance fights the RIL one for the PCM (EBUSY).
+vendor.audio.mainline.voice_call_service=
+
+# NAS service domain preference: 1 = CS, 2 = PS only (Jio), 3 = CS + PS.
+persist.vendor.kebab.service_domain=2
+
+# IMS DCM (QMI 0x302): 0 = kebab-dataconn serves it, 1 = kebab-rild serves it.
+persist.vendor.kebab.dcm_in_rild=0
