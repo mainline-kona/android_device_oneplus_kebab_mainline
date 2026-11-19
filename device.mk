@@ -41,6 +41,7 @@ $(call inherit-product, frameworks/native/build/phone-xhdpi-6144-dalvik-heap.mk)
 
 # Dynamic partitions
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
+$(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
 
 # Recovery helpers
 PRODUCT_COPY_FILES += \
