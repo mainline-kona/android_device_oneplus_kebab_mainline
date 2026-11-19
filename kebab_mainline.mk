@@ -12,9 +12,9 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
 $(call inherit-product, device/oneplus/kebab_mainline/device.mk)
 
 # Inherit common PixelOS / custom rom configuration
-$(call inherit-product, vendor/custom/config/common_full_phone.mk)
+$(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
-PRODUCT_NAME := custom_kebab_mainline
+PRODUCT_NAME := kebab_mainline
 PRODUCT_DEVICE := kebab_mainline
 PRODUCT_MANUFACTURER := OnePlus
 PRODUCT_BRAND := OnePlus
