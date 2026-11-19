@@ -14,6 +14,7 @@ TARGET_GRAPHICS := mesa
 TARGET_GRAPHICS_EGL := mesa
 TARGET_GRAPHICS_VULKAN := mesa
 BOARD_MESA3D_USES_MESON_BUILD := true
+LINEAGE_BUILD := true
 
 include device/mainline/qcom-common/BoardConfigMainlineQcomCommon.mk
 
