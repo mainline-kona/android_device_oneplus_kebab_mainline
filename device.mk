@@ -31,6 +31,10 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/audio/ucm2/OnePlus-8T.conf:$(TARGET_COPY_OUT_VENDOR)/etc/alsa/ucm2/conf.d/sm8250/OnePlus-8T.conf \
     $(DEVICE_PATH)/audio/ucm2/HiFi.conf:$(TARGET_COPY_OUT_VENDOR)/etc/alsa/ucm2/Qualcomm/sm8250/OnePlus-8T/HiFi.conf
 
+# DSP: serve socinfo through hexagonrpcd
+PRODUCT_COPY_FILES += \
+    $(call find-copy-subdir-files,*,$(DEVICE_PATH)/socinfo/,$(TARGET_COPY_OUT_VENDOR)/etc/hexagonrpcd-root/socinfo/)
+
 # Boot animation
 TARGET_SCREEN_HEIGHT := 2400
 TARGET_SCREEN_WIDTH := 1080
