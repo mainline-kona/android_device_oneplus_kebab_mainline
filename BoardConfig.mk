@@ -38,18 +38,20 @@ BOARD_KERNEL_BASE := 0x00000000
 BOARD_KERNEL_PAGESIZE := 4096
 BOARD_RAMDISK_USE_LZ4 := true
 BOARD_KERNEL_CMDLINE := \
-    console=tty0 ignore_loglevel panic=3 oops=panic hung_task_panic=1 qcom_wdt.timeout=15 \
+    ignore_loglevel panic=3 oops=panic androidboot.selinux=permissive printk.always_kmsg_dump=1 printk.devkmsg=on \
     clk_ignore_unused pd_ignore_unused regulator_ignore_unused \
     arm-smmu.disable_bypass=0 swiotlb=2048 \
     lpm_levels.sleep_disabled=1 service_locator.enable=1 \
-    androidboot.usbcontroller=a600000.usb androidboot.usbconfigfs=true \
-    loop.max_part=7 cgroup.memory=nokmem,nosocket \
-    androidboot.hardware=qcom \
+    androidboot.usbcontroller=a600000.usb loop.max_part=7 \
+    androidboot.hardware=kebab \
     androidboot.fstab_suffix=kebab \
-    androidboot.bootdevice=1d84000.ufshc \
-    androidboot.boot_devices=soc/1d84000.ufshc,soc@0/1d84000.ufshc,1d84000.ufshc \
-    androidboot.selinux=permissive \
-    drm.debug=0x1ff firmware_class.path=/vendor/firmware,/lib/firmware
+    androidboot.boot_devices=soc@0/1d84000.ufshc \
+    androidboot.init_fatal_reboot_target=bootloader \
+    msm.separate_gpu_kms=1
+
+BOARD_BOOTCONFIG := \
+    androidboot.hardware=kebab \
+    androidboot.init_fatal_reboot_target=bootloader
 
 BOARD_RECOVERY_KERNEL_CMDLINE := androidboot.bootmode=recovery
 
@@ -113,6 +115,7 @@ TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
 
 # SELinux
 BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
+-include hardware/samsung-ext/interfaces/sepolicy/SEPolicy.mk
 
 # VINTF
 DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/configs/manifest_security.xml
