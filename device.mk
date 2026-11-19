@@ -51,6 +51,11 @@ PRODUCT_COPY_FILES += \
 
 # Firmware
 PRODUCT_COPY_FILES += \
+    $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/amss.bin:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/ath11k/QCA6390/hw2.0/amss.bin \
+    $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/board-2.bin:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/ath11k/QCA6390/hw2.0/board-2.bin \
+    $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/m3.bin:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/ath11k/QCA6390/hw2.0/m3.bin \
+    $(FIRMWARE_PATH)/qca/htbtfw20.tlv:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/qca/htbtfw20.tlv \
+    $(FIRMWARE_PATH)/qca/htnv20.bin:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/qca/htnv20.bin \
     $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/amss.bin:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/ath11k/QCA6390/hw2.0/amss.bin \
     $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/board-2.bin:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/ath11k/QCA6390/hw2.0/board-2.bin \
     $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/m3.bin:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/ath11k/QCA6390/hw2.0/m3.bin \
@@ -61,7 +66,9 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.adb.secure=0 \
-    persist.sys.usb.config=adb
+    persist.sys.usb.config=adb \
+    sys.usb.controller=a600000.dwc3 \
+    vendor.usb.controller=a600000.dwc3
 
 # Init
 PRODUCT_PACKAGES += \
