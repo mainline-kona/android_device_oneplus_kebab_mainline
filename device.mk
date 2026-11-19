@@ -27,6 +27,10 @@ $(call inherit-product, device/mainline/qcom-common/mainline_qcom-common.mk)
 PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/media/media_codecs_c2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_c2.xml
 
+# GPS
+PRODUCT_COPY_FILES += \
+    $(DEVICE_PATH)/configs/gps.conf:$(TARGET_COPY_OUT_VENDOR)/etc/gps.conf
+
 PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.v4l2_codec2.decode_concurrent_instances=8 \
     ro.vendor.v4l2_codec2.encode_concurrent_instances=8 \
