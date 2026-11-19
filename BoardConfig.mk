@@ -38,13 +38,14 @@ BOARD_KERNEL_BASE := 0x00000000
 BOARD_KERNEL_PAGESIZE := 4096
 BOARD_RAMDISK_USE_LZ4 := true
 BOARD_KERNEL_CMDLINE := \
-    console=tty0 ignore_loglevel panic=0 \
+    console=tty0 ignore_loglevel panic=3 oops=panic hung_task_panic=1 \
     clk_ignore_unused pd_ignore_unused regulator_ignore_unused \
     arm-smmu.disable_bypass=0 swiotlb=2048 \
     lpm_levels.sleep_disabled=1 service_locator.enable=1 \
     androidboot.usbcontroller=a600000.usb androidboot.usbconfigfs=true \
     loop.max_part=7 cgroup.memory=nokmem,nosocket \
     androidboot.hardware=qcom \
+    androidboot.fstab_suffix=kebab \
     androidboot.bootdevice=1d84000.ufshc \
     androidboot.boot_devices=soc/1d84000.ufshc,soc@0/1d84000.ufshc,1d84000.ufshc \
     androidboot.selinux=permissive \
