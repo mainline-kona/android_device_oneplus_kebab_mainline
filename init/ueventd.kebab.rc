@@ -7,8 +7,19 @@ firmware_directories /lib/firmware/ /system/etc/firmware/ /vendor/firmware/ /odm
 
 # Modem AT ports
 /dev/wwan0at*             0660   radio      radio
+/dev/wwan0qmi*            0660   radio      radio
 
-# Fingerprint (Goodix control node, QTEE for its trusted app)
-/dev/goodix_fp             0660   system     system
-/dev/tee0                  0660   system     system
-/dev/qseecom_bridge        0660   system     system
+# Graphics & Memory
+/dev/dri/*                0666   system     graphics
+/dev/dma_heap/*           0666   system     graphics
+/dev/ion                  0664   system     system
+/dev/kgsl-3d0             0666   system     graphics
+
+# Storage
+/dev/block/by-name/*      0660   root       system
+
+# QTEE & QSEECom bridge for KeyMint / Gatekeeper / RPMB
+/dev/tee0                 0660   system     system
+/dev/qseecom_bridge       0660   system     system
+/dev/0:0:0:49476          0660   system     system
+/dev/ufs-bsg0             0660   system     system

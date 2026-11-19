@@ -111,6 +111,17 @@ for fw_src in /lib/firmware/qca /system/etc/firmware/qca; do
     fi
 done
 
+# Stage Adreno GPU firmware (a650_sqe.fw, a650_gmu.bin) across all search paths
+for fw_src in /lib/firmware/qcom /system/etc/firmware/qcom /vendor/firmware/qcom; do
+    if [ -f "$fw_src/a650_sqe.fw" ] || [ -f "$fw_src/a650_gmu.bin" ]; then
+        for dst in /lib/firmware/qcom /system/etc/firmware/qcom /vendor/firmware/qcom /etc/firmware/qcom; do
+            mkdir -p "$dst"
+            cp -n "$fw_src"/a650* "$dst/" 2>/dev/null
+        done
+        break
+    fi
+done
+
 # Link all squashed/symlinked MBNs into all system firmware search paths
 for extra in /lib/firmware /lib/firmware/qcom /system/lib/firmware/qcom/sm8250/OnePlus/kebab /vendor/firmware/qcom/sm8250/OnePlus/kebab; do
     mkdir -p "$extra"

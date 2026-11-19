@@ -6,8 +6,11 @@
 import /vendor/etc/init/hw/init.mainline.qcom.rc
 
 on early-init
-    # UFS controller symlink for bootdevice
+    # The RPMB listener tells UFS from eMMC by where this points;
+    # qcom-common's bootdevice/by-name then resolves to the controller's own by-name
     symlink /dev/block/platform/soc@0/1d84000.ufshc /dev/block/bootdevice
+    # Bring-up: keep logs on /metadata, which survives any reset and is readable from recovery
+    mkdir /metadata/bringup 0777 root root
 
 on init
     # qseecomd bridge for stock KeyMint & Gatekeeper
@@ -26,13 +29,62 @@ on late-fs
     mount_all --late
 
 on post-fs
+    mkdir /mnt/vendor/persist/klog 0775 root system
+    # SLPI sensor registry, served by hexagonrpcd-sdsp via hexagonrpcd-root/sensors/registry
+    mkdir /mnt/vendor/persist/sensors 0775 system system
+    mkdir /mnt/vendor/persist/sensors/registry 0775 system system
+    mkdir /mnt/vendor/persist/sensors/registry/registry 0775 system system
+    # DSP/Venus firmware is the stock split .mdt/.bNN set on the modem partition
+    # (mounted at /vendor/firmware_mnt by mount_all). The DT asks for "adsp.mdt",
+    # "cdsp.mdt", "slpi.mdt" and "venus.mdt", so point the kernel loader there
+    # before (re)starting the remoteprocs.
+    write /sys/module/firmware_class/parameters/path /vendor/firmware_mnt/image
+    # The X55 fetches its MCFG/RF config files over TFTP (QRTR service 4096)
+    # while it boots, a few seconds after sbl1.mbn becomes readable here.
+    # qcom-common only starts tqftpserv at "boot", well after the modem asked
+    # (it then came up with no RF: zero bands, stuck offline), so serve them
+    # from now on. Debug build of the service: every request goes to kmsg.
+    start vendor.tqftpserv_early
     trigger start_all_remoteproc
+    # Venus loads firmware at probe time (before /vendor was mounted); retry now
+    write /sys/bus/platform/drivers/qcom-venus/bind aa00000.video-codec
+    # The external SDX55 is flashless: mhi-pci-generic stays bound and powers
+    # it up by itself once sdx55m/sbl1.mbn is readable through the path above
+    # (do NOT unbind/rebind it here: that aborts the SBL transfer mid-flight).
     start vendor.bringup_kmsg
     start vendor.bringup_logcat
+    start vendor.bringup_diag
+
+# SM8250 has no internal modem (kebab uses an external SDX55), so rmtfs has no
+# remote to serve and restart-loops forever; stop it instead of respawning.
+on property:init.svc.vendor.rmtfs=restarting
+    stop vendor.rmtfs
+
+# Early TFTP server for the external modem (see post-fs). Only one server may
+# own QRTR service 4096, so keep qcom-common's late instance from starting.
+# "-i 3": stock tftp_server publishes one instance per remote and the X55's
+# MPSS only looks up instance 3 (/vendor/rfs/mdm/mpss); instance 1 alone is
+# never found, so the modem never fetched its MCFG / RF card files.
+service vendor.tqftpserv_early /vendor/bin/tqftpserv -d -i 3
+    class core
+    user root
+    group system
+    stdio_to_kmsg
+    disabled
+
+on property:init.svc.vendor.tqftpserv=running
+    stop vendor.tqftpserv
 
 service vendor.bringup_kmsg /vendor/bin/bringup-log.sh kmsg
     user root
     group root
+    seclabel u:r:su:s0
+    oneshot
+    disabled
+
+service vendor.bringup_diag /vendor/bin/bringup-log.sh diag
+    user root
+    group root radio
     seclabel u:r:su:s0
     oneshot
     disabled
@@ -43,3 +95,55 @@ service vendor.bringup_logcat /vendor/bin/bringup-log.sh logcat
     seclabel u:r:su:s0
     oneshot
     disabled
+
+# IMS bring-up experiment, OFF by default. Stock qcrild tells the modem which APN
+# is the IMS one (QMI DSD); our RIL never does, and the modem's IMS client keeps
+# bringing the "ims" PDN up and dropping it without any SIP, and DSD GET_APN_INFO
+# (0x0033) answers "info unavailable" for every APN type. QMI_DSD_SET_APN_INFO
+# (0x0032, from the stock libqmiservices IDL): TLV 0x01 = u32 apn_type (1 = IMS),
+# u8 len, "ims"; TLV 0x10 = apn_invalid (0). The newer Set APN Type (0x0051)
+# returns NOT_SUPPORTED on this MPSS.HI.2.5 firmware.
+# Enable:  setprop persist.vendor.kebab.ims_apn_type 1   (applies now and on every boot)
+# Second request (same socket) maps the default APN (type 0) to "jionet".
+service vendor.kebab_ims_apn /vendor/bin/kebab-dataconn --qmi 0x2a 0x0032 01:0100000003696d73 10:00 + 0x0032 01:00000000066a696f6e6574 10:00
+    user root
+    group radio
+    seclabel u:r:su:s0
+    oneshot
+    disabled
+
+# Stand-in for the stock imsdatadaemon: QMI IMS DCM server (svc 0x302). With the
+# IMS APN known, the modem's IMS client asks it to bring up the "ims" PDN
+# (PDP_ACTIVATE) and registers once it gets the address back (verified live:
+# IMSA REGISTERED, voice/SMS full service).
+service vendor.kebab_ims_dcm /vendor/bin/kebab-dataconn --ims-dcm
+    user root
+    group radio
+    seclabel u:r:su:s0
+    disabled
+
+# SMS over IMS: WMS SET_DOMAIN_PREF_CONFIG (0x0052) TLV 0x10 lte_domain_pref = 1 (IMS).
+# Factory value is 0 (none): WMS then has no IMS transport (GET_TRANSPORT_LAYER_INFO
+# 0x0048 -> error 52) and MO SMS goes over NAS, where Jio NR SA rejects it
+# (MNSMS_REL_REQ cause 111 -> +CMS ERROR: 500). Re-sent every boot because the
+# modem's EFS write-backs are not persisted yet.
+service vendor.kebab_sms_ims /vendor/bin/kebab-dataconn --qmi 0x05 0x0052 10:01
+    user root
+    group radio
+    seclabel u:r:su:s0
+    oneshot
+    disabled
+
+# zram swap: 50% of RAM, lz4 (zram is built into the kernel)
+on property:sys.boot_completed=1
+    write /sys/block/zram0/comp_algorithm lz4
+    write /proc/sys/vm/page-cluster 0
+    swapon_all /vendor/etc/fstab.kebab
+
+on property:sys.boot_completed=1 && property:persist.vendor.kebab.ims_apn_type=1
+    start vendor.kebab_ims_dcm
+    start vendor.kebab_ims_apn
+    start vendor.kebab_sms_ims
+
+on property:persist.vendor.kebab.ims_apn_type=0
+    stop vendor.kebab_ims_dcm
