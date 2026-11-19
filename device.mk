@@ -51,6 +51,10 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
 
+# Overlays
+PRODUCT_PACKAGES += \
+    KebabMainlineFrameworksResTarget
+
 # Scoped storage
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
 
