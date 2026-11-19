@@ -68,8 +68,8 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.adb.secure=0 \
     persist.sys.usb.config=adb \
-    sys.usb.controller=a600000.dwc3 \
-    vendor.usb.controller=a600000.dwc3
+    sys.usb.controller=a600000.usb \
+    vendor.usb.controller=a600000.usb
 
 # Init
 PRODUCT_PACKAGES += \
