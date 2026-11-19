@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-firmware_directories /vendor/firmware/
+firmware_directories /lib/firmware/ /system/etc/firmware/ /vendor/firmware/ /odm/firmware/
 
 # Modem AT ports
 /dev/wwan0at*             0660   radio      radio

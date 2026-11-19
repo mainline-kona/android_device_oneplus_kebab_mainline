@@ -90,6 +90,27 @@ if [ ! -e "$TARGET_DIR/slpi.mbn" ] && [ -x /system/bin/pil-squasher ] && [ -f /v
     /system/bin/pil-squasher "$TARGET_DIR/slpi.mbn" /vendor/firmware_mnt/image/slpi.mdt 2>/dev/null
 fi
 
+# Stage Wi-Fi (ath11k) and Bluetooth (qca) firmware across all search paths
+for fw_src in /lib/firmware/ath11k /system/etc/firmware/ath11k; do
+    if [ -d "$fw_src" ]; then
+        for dst in /lib/firmware/ath11k /system/etc/firmware/ath11k /vendor/firmware/ath11k /etc/firmware/ath11k; do
+            mkdir -p "$dst"
+            cp -r "$fw_src"/* "$dst/" 2>/dev/null
+        done
+        break
+    fi
+done
+
+for fw_src in /lib/firmware/qca /system/etc/firmware/qca; do
+    if [ -d "$fw_src" ]; then
+        for dst in /lib/firmware/qca /system/etc/firmware/qca /vendor/firmware/qca /etc/firmware/qca; do
+            mkdir -p "$dst"
+            cp -r "$fw_src"/* "$dst/" 2>/dev/null
+        done
+        break
+    fi
+done
+
 # Link all squashed/symlinked MBNs into all system firmware search paths
 for extra in /lib/firmware /lib/firmware/qcom /system/lib/firmware/qcom/sm8250/OnePlus/kebab /vendor/firmware/qcom/sm8250/OnePlus/kebab; do
     mkdir -p "$extra"
