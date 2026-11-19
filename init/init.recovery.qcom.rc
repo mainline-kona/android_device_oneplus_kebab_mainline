@@ -1,0 +1,27 @@
+# OnePlus 8T (kebab) Mainline Linux 7.2.0 - DSP Remoteproc & USB Gadget Service
+service fw_mount_service /system/bin/sh /system/bin/firmware_mount_bind.sh
+    disabled
+    oneshot
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
+service usb_bind_service /system/bin/sh /system/bin/usb_gadget_bind.sh
+    disabled
+    oneshot
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
+on fs
+    exec_background u:r:recovery:s0 -- /system/bin/sh /system/bin/firmware_mount_bind.sh
+    start fw_mount_service
+
+on post-fs
+    start fw_mount_service
+    start usb_bind_service
+
+on boot
+    exec_background u:r:recovery:s0 -- /system/bin/sh /system/bin/firmware_mount_bind.sh
+    start fw_mount_service
+    start usb_bind_service

@@ -41,6 +41,13 @@ $(call inherit-product, frameworks/native/build/phone-xhdpi-6144-dalvik-heap.mk)
 # Dynamic partitions
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 
+# Recovery helpers
+PRODUCT_COPY_FILES += \
+    $(DEVICE_PATH)/init/firmware_mount_bind.sh:$(TARGET_COPY_OUT_RECOVERY)/root/system/bin/firmware_mount_bind.sh \
+    $(DEVICE_PATH)/init/usb_gadget_bind.sh:$(TARGET_COPY_OUT_RECOVERY)/root/system/bin/usb_gadget_bind.sh \
+    $(DEVICE_PATH)/init/init.recovery.qcom.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.qcom.rc \
+    $(DEVICE_PATH)/init/init.recovery.qcom.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.kebab.rc
+
 # Init
 PRODUCT_PACKAGES += \
     bringup-log.sh \
