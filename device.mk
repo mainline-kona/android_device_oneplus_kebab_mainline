@@ -85,9 +85,12 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Init
 PRODUCT_PACKAGES += \
     bringup-log.sh \
+    fstab.default \
     fstab.kebab \
     fstab.kebab.vendor_ramdisk \
+    fstab.qcom \
     init.kebab.rc \
+    init.qcom.rc \
     ueventd.kebab.rc
 
 PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
