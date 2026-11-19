@@ -27,18 +27,29 @@ BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 
 # Boot
 BOARD_BOOT_HEADER_VERSION := 2
-BOARD_MKBOOTIMG_ARGS := --header_version $(BOARD_BOOT_HEADER_VERSION)
+BOARD_MKBOOTIMG_ARGS := \
+    --header_version $(BOARD_BOOT_HEADER_VERSION) \
+    --kernel_offset 0x00008000 \
+    --ramdisk_offset 0x20000000 \
+    --dtb_offset 0x22000000 \
+    --tags_offset 0x00000100
 BOARD_KERNEL_BASE := 0x00000000
 BOARD_KERNEL_PAGESIZE := 4096
 BOARD_RAMDISK_USE_LZ4 := true
 BOARD_KERNEL_CMDLINE := \
-    $(filter-out binder.impl=rust panic=-1 vt.global_cursor_default=0,$(MAINLINE_COMMON_KERNEL_PARAMS)) \
-    $(MAINLINE_COMMON_ANDROIDBOOT_PARAMS) \
-    $(MAINLINE_QCOM_SOC_ANDROIDBOOT_PARAMS) \
-    androidboot.hardware=kebab \
+    console=tty0 ignore_loglevel panic=0 \
     clk_ignore_unused pd_ignore_unused regulator_ignore_unused \
-    msm.separate_gpu_kms=1 \
-    console=tty0 ignore_loglevel panic=0
+    arm-smmu.disable_bypass=0 swiotlb=2048 \
+    lpm_levels.sleep_disabled=1 service_locator.enable=1 \
+    androidboot.usbcontroller=a600000.usb androidboot.usbconfigfs=true \
+    loop.max_part=7 cgroup.memory=nokmem,nosocket \
+    androidboot.hardware=qcom \
+    androidboot.bootdevice=1d84000.ufshc \
+    androidboot.boot_devices=soc/1d84000.ufshc,soc@0/1d84000.ufshc,1d84000.ufshc \
+    androidboot.selinux=permissive \
+    drm.debug=0x1ff firmware_class.path=/vendor/firmware,/lib/firmware
+
+BOARD_RECOVERY_KERNEL_CMDLINE := androidboot.bootmode=recovery
 
 # DTB / DTBO
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
