@@ -28,12 +28,6 @@ prebuilt_etc {
 }
 
 prebuilt_etc {
-    name: "ueventd.kebab.rc",
-    src: "init/ueventd.kebab.rc",
-    vendor: true,
-}
-
-prebuilt_etc {
     name: "init.kebab.rc",
     src: "init/init.kebab.rc",
     sub_dir: "init/hw",
@@ -44,6 +38,24 @@ prebuilt_etc {
     name: "init.qcom.rc",
     src: "init/init.kebab.rc",
     sub_dir: "init/hw",
+    vendor: true,
+}
+
+prebuilt_etc {
+    name: "ueventd.kebab.rc",
+    src: "init/ueventd.kebab.rc",
+    vendor: true,
+}
+
+sh_binary {
+    name: "kebab-pdready.sh",
+    src: "init/kebab-pdready.sh",
+    vendor: true,
+}
+
+sh_binary {
+    name: "kebab-ims-init.sh",
+    src: "init/kebab-ims-init.sh",
     vendor: true,
 }
 

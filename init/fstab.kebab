@@ -32,4 +32,4 @@ odm         /odm         ext4  ro,barrier=1,discard wait,slotselect,logical,firs
 /devices/platform/soc@0/a600000.usb/* auto auto nosuid,nodev wait,voldmanaged=usb:auto
 
 # zram swap (set up by swapon_all in init.kebab.rc once boot completes)
-/dev/block/zram0 none swap defaults zramsize=50%,max_comp_streams=8
+/dev/block/zram0 none swap defaults zramsize=50%

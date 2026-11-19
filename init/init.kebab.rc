@@ -27,6 +27,15 @@ on fs
 
 on late-fs
     mount_all --late
+    # The X55 probes TFTP at ~25 s, but qcom-common only creates these in the
+    # "boot" action (~35 s). tqftpserv maps /readwrite/ to this directory and
+    # mkdir()s only the leaf, so on freshly formatted /data every probe was
+    # rejected and the modem came up offline with zero bands. late-fs runs
+    # immediately after /data is mounted, before the modem asks.
+    mkdir /data/vendor 0771 root root
+    mkdir /data/vendor/tmp 0755 root root
+    mkdir /data/vendor/tmp/tqftpserv 0755 root root
+    restorecon_recursive /data/vendor
 
 on post-fs
     mkdir /mnt/vendor/persist/klog 0775 root system
@@ -45,9 +54,17 @@ on post-fs
     # (it then came up with no RF: zero bands, stuck offline), so serve them
     # from now on. Debug build of the service: every request goes to kmsg.
     start vendor.tqftpserv_early
-    trigger start_all_remoteproc
     # Venus loads firmware at probe time (before /vendor was mounted); retry now
     write /sys/bus/platform/drivers/qcom-venus/bind aa00000.video-codec
+    # pd-mapper must publish the DSP protection-domain maps before the
+    # remoteprocs (SLPI sensors, ADSP) start below.
+    start vendor.pd-mapper
+    # EFS write-back: disabled during bringup to protect mdm1m9kefs* flash partitions
+    # from persistent corruption until modem boot stability is fully proven.
+    write /sys/module/sahara_mdm/parameters/efs_writeback 0
+    # Voice audio calibration level 0 (topology bypass to prevent ADSP -5 failures)
+    write /sys/module/q6voice/parameters/cal_level 0
+    start vendor.kebab_pdready
     # The external SDX55 is flashless: mhi-pci-generic stays bound and powers
     # it up by itself once sdx55m/sbl1.mbn is readable through the path above
     # (do NOT unbind/rebind it here: that aborts the SBL transfer mid-flight).
@@ -71,6 +88,16 @@ service vendor.tqftpserv_early /vendor/bin/tqftpserv -d -i 3
     group system
     stdio_to_kmsg
     disabled
+
+service vendor.kebab_pdready /vendor/bin/kebab-pdready.sh
+    user root
+    group root
+    oneshot
+    disabled
+
+# DSPs start only after pd-mapper has published the protection-domain maps
+on property:sys.kebab.pdready=1
+    trigger start_all_remoteproc
 
 on property:init.svc.vendor.tqftpserv=running
     stop vendor.tqftpserv
@@ -109,6 +136,7 @@ service vendor.kebab_ims_apn /vendor/bin/kebab-dataconn --qmi 0x2a 0x0032 01:010
     user root
     group radio
     seclabel u:r:su:s0
+    stdio_to_kmsg
     oneshot
     disabled
 
@@ -120,6 +148,7 @@ service vendor.kebab_ims_dcm /vendor/bin/kebab-dataconn --ims-dcm
     user root
     group radio
     seclabel u:r:su:s0
+    stdio_to_kmsg
     disabled
 
 # SMS over IMS: WMS SET_DOMAIN_PREF_CONFIG (0x0052) TLV 0x10 lte_domain_pref = 1 (IMS).
@@ -131,6 +160,7 @@ service vendor.kebab_sms_ims /vendor/bin/kebab-dataconn --qmi 0x05 0x0052 10:01
     user root
     group radio
     seclabel u:r:su:s0
+    stdio_to_kmsg
     oneshot
     disabled
 
@@ -140,10 +170,48 @@ on property:sys.boot_completed=1
     write /proc/sys/vm/page-cluster 0
     swapon_all /vendor/etc/fstab.kebab
 
-on property:sys.boot_completed=1 && property:persist.vendor.kebab.ims_apn_type=1
+# IMS DCM must be published before the modem boots its IMS client (stock
+# starts imsdatadaemon early too). APN/IMSS/IMSA calls run once the modem is
+# online, via the bring-up script below.
+on early-boot && property:persist.vendor.kebab.ims_apn_type=1
     start vendor.kebab_ims_dcm
-    start vendor.kebab_ims_apn
-    start vendor.kebab_sms_ims
+
+on property:sys.boot_completed=1 && property:persist.vendor.kebab.ims_apn_type=1
+    start vendor.kebab_ims_init
+
+on property:init.svc.vendor.kebab_rild=running && property:persist.vendor.kebab.ims_apn_type=1
+    start vendor.kebab_ims_init
+
+# Consolidated IMS bring-up: waits for the modem, registers IMSA/IMSS
+# indications, sets the IMS APN and the WMS IMS domain preference.
+service vendor.kebab_ims_init /vendor/bin/kebab-ims-init.sh
+    user root
+    group radio
+    seclabel u:r:su:s0
+    stdio_to_kmsg
+    oneshot
+    disabled
 
 on property:persist.vendor.kebab.ims_apn_type=0
+    stop vendor.kebab_ims_dcm
+
+# CS-VOICE helper: started and stopped by the RIL around calls (the audio HAL
+# no longer starts it; vendor.audio.mainline.voice_call_service is empty). Kept
+# as a disabled init service so it can still be launched manually for debugging.
+service vendor.kebab_voicecall /vendor/bin/kebab-voicecall
+    class main
+    user audioserver
+    group audio
+    disabled
+
+# kebab-rild: the radio stack (libkebab-rilqmi) loaded by the AIDL rild binary.
+# Single engine: the legacy reference-ril was removed.
+service vendor.kebab_rild /vendor/bin/hw/libcuttlefish-rild -l libkebab-rilqmi.so
+    class main
+    user radio
+    group radio inet misc audio log readproc wakelock
+    capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW
+
+# When the daemon owns the IMS DCM server, kebab-dataconn must not.
+on property:persist.vendor.kebab.dcm_in_rild=1
     stop vendor.kebab_ims_dcm
