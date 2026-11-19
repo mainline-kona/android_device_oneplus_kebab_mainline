@@ -15,9 +15,11 @@ bluetooth.device.default_name=OnePlus 8T
 # USB
 vendor.usb.product_string=OnePlus 8T
 
-# Crypto / FBE
-ro.crypto.volume.filenames_mode=aes-256-cts
-ro.crypto.volume.metadata.method=dm-default-key
+# Radio: LTE/NR preferred (NR_LTE_GSM_WCDMA)
+ro.telephony.default_network=33
+
+# Gatekeeper
+vendor.gatekeeper.is_security_level_spu=0
 
 # APEX
 apexd.config.dm_create.timeout=10000
