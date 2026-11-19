@@ -41,7 +41,7 @@ BOARD_KERNEL_CMDLINE := \
     clk_ignore_unused pd_ignore_unused regulator_ignore_unused \
     arm-smmu.disable_bypass=0 swiotlb=2048 \
     lpm_levels.sleep_disabled=1 service_locator.enable=1 \
-    androidboot.usbcontroller=a600000.usb androidboot.usbconfigfs=true \
+    androidboot.usbcontroller=a600000.dwc3 androidboot.usbconfigfs=true \
     loop.max_part=7 cgroup.memory=nokmem,nosocket \
     androidboot.hardware=qcom \
     androidboot.bootdevice=1d84000.ufshc \

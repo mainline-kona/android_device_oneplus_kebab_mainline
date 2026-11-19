@@ -48,6 +48,10 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/init/init.recovery.qcom.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.qcom.rc \
     $(DEVICE_PATH)/init/init.recovery.qcom.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.kebab.rc
 
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.adb.secure=0 \
+    persist.sys.usb.config=adb
+
 # Init
 PRODUCT_PACKAGES += \
     bringup-log.sh \
