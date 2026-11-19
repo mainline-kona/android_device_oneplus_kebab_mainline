@@ -1,0 +1,10 @@
+#
+# Copyright (C) 2026 The PenguinOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# Backlight
+genfscon sysfs /devices/platform/soc@0/ae00000.display-subsystem/ae94000.dsi.0/backlight    u:object_r:vendor_sysfs_backlight:s0
+
+# Bluetooth address seed
+genfscon sysfs /devices/soc0/serial_number    u:object_r:vendor_sysfs_soc_info:s0
