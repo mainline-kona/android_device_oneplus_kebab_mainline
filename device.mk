@@ -6,6 +6,11 @@
 DEVICE_PATH := device/oneplus/kebab_mainline
 FIRMWARE_PATH ?= device/oneplus/kebab_mainline-firmware
 
+# Sensors: real hardware via the mainline Sensors HAL + libssc (SSC/QMI)
+# backend. Must be set before the qcom-common inherit below activates the
+# optional sensors-hal_mainline module.
+TARGET_SENSORS_HAL := mainline
+
 TARGET_BOARD_PLATFORM := qcom
 TARGET_QCOM_SOC := sm8250
 TARGET_GRAPHICS := mesa
@@ -27,10 +32,6 @@ $(call inherit-product, device/mainline/qcom-common/mainline_qcom-common.mk)
 PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/media/media_codecs_c2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_c2.xml
 
-# GPS
-PRODUCT_COPY_FILES += \
-    $(DEVICE_PATH)/configs/gps.conf:$(TARGET_COPY_OUT_VENDOR)/etc/gps.conf
-
 PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.v4l2_codec2.decode_concurrent_instances=8 \
     ro.vendor.v4l2_codec2.encode_concurrent_instances=8 \
@@ -50,6 +51,10 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/audio/ucm2/OnePlus-8T.conf:$(TARGET_COPY_OUT_VENDOR)/etc/alsa/ucm2/conf.d/sm8250/OnePlus-8T.conf \
     $(DEVICE_PATH)/audio/ucm2/HiFi.conf:$(TARGET_COPY_OUT_VENDOR)/etc/alsa/ucm2/Qualcomm/sm8250/OnePlus-8T/HiFi.conf
 
+# GNSS: stock reference config; consumed once a GNSS HAL is added
+PRODUCT_COPY_FILES += \
+    $(DEVICE_PATH)/configs/gps.conf:$(TARGET_COPY_OUT_VENDOR)/etc/gps.conf
+
 # Bluetooth: QCA6390 has no programmed public address, so hci0 stays
 # unconfigured until one is set (derived from the serial number, as on phone2)
 PRODUCT_PACKAGES += \
@@ -58,7 +63,8 @@ PRODUCT_PACKAGES += \
 # DSP: the SLPI runs the sensor core; serve it the stock sensor configs,
 # registry and socinfo through hexagonrpcd (same layout as phone2_mainline)
 PRODUCT_PACKAGES += \
-    hexagonrpcd_sdsp_phony
+    hexagonrpcd_sdsp_phony \
+    pd-mapper
 
 PRODUCT_COPY_FILES += \
     $(call find-copy-subdir-files,*,$(DEVICE_PATH)/socinfo/,$(TARGET_COPY_OUT_VENDOR)/etc/hexagonrpcd-root/socinfo/) \
@@ -93,7 +99,10 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/init/firmware_mount_bind.sh:$(TARGET_COPY_OUT_RECOVERY)/root/system/bin/firmware_mount_bind.sh \
     $(DEVICE_PATH)/init/usb_gadget_bind.sh:$(TARGET_COPY_OUT_RECOVERY)/root/system/bin/usb_gadget_bind.sh \
     $(DEVICE_PATH)/init/init.recovery.qcom.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.qcom.rc \
-    $(DEVICE_PATH)/init/init.recovery.qcom.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.kebab.rc \
+    $(DEVICE_PATH)/init/init.recovery.qcom.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.kebab.rc
+
+# Firmware
+PRODUCT_COPY_FILES += \
     $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/amss.bin:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/ath11k/QCA6390/hw2.0/amss.bin \
     $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/board-2.bin:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/ath11k/QCA6390/hw2.0/board-2.bin \
     $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/m3.bin:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/ath11k/QCA6390/hw2.0/m3.bin \
@@ -106,6 +115,10 @@ PRODUCT_COPY_FILES += \
     $(FIRMWARE_PATH)/qca/htnv20.bin:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/qca/htnv20.bin \
     $(FIRMWARE_PATH)/qca/htbtfw20.tlv:$(TARGET_COPY_OUT_VENDOR)/firmware/qca/htbtfw20.tlv \
     $(FIRMWARE_PATH)/qca/htnv20.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/qca/htnv20.bin \
+    $(FIRMWARE_PATH)/qcom/q6voice-cal.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/qcom/q6voice-cal.bin \
+    $(FIRMWARE_PATH)/qcom/q6voice-vol-cal.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/qcom/q6voice-vol-cal.bin \
+    $(FIRMWARE_PATH)/qcom/q6voice-devcfg.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/qcom/q6voice-devcfg.bin \
+    $(FIRMWARE_PATH)/qcom/q6voice-topologies.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/qcom/q6voice-topologies.bin \
     $(FIRMWARE_PATH)/qcom/a650_sqe.fw:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/qcom/a650_sqe.fw \
     $(FIRMWARE_PATH)/qcom/a650_gmu.bin:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/qcom/a650_gmu.bin \
     $(FIRMWARE_PATH)/qcom/a650_sqe.fw:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/qcom/a650_sqe.fw \
@@ -132,6 +145,7 @@ PRODUCT_PRODUCT_PROPERTIES += \
 
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.adb.secure=0 \
+    persist.vendor.kebab.ims_apn_type=1 \
     persist.sys.usb.config=adb \
     sys.usb.controller=a600000.usb \
     vendor.usb.controller=a600000.usb
@@ -144,6 +158,9 @@ endif
 # Init
 PRODUCT_PACKAGES += \
     bringup-log.sh \
+    kebab-ims-init.sh \
+    kebab-pdready.sh \
+    pd-mapper.rc \
     fstab.default \
     fstab.kebab \
     fstab.kebab.vendor_ramdisk \
@@ -168,12 +185,30 @@ PRODUCT_PACKAGES += \
     KebabMainlineTelephonyResTarget \
     KebabMainlineWifiResTarget
 
-# Radio: AT-based RIL (from phone2_mainline) on the SDX55's wwan0at0,
-# with kebab-dataconn bringing up data over QMI (wwan0qmi0 + mhi_hwip0)
+# Radio: kebab-rild (libkebab-rilqmi) is the only RIL. kebab-dataconn still
+# provides the IMS DCM server and manual QMI/DIAG tooling.
 PRODUCT_PACKAGES += \
     kebab-dataconn \
-    libcuttlefish-ril-2 \
+    kebab-voicecall \
+    kebab-qmi-probe \
+    libkebab-rilqmi \
     libcuttlefish-rild
+
+# libqmi/libqrtr runtime for kebab-rild and the probe
+PRODUCT_PACKAGES += \
+    libqmi-glib \
+    libqrtr-glib \
+    libglib-2.0 \
+    libgio-2.0 \
+    libgobject-2.0
+
+# Lineage framework bits: the Lineage-patched framework reads
+# LineageSettings during system_server start (KeyGestureController), so
+# the provider must be present or boot loops. Shipped unconditionally
+# because LINEAGE_BUILD is not "true" in this product config.
+PRODUCT_PACKAGES += \
+    LineageSettingsProvider \
+    LineageParts
 
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.telephony.calling.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.calling.xml \
@@ -186,8 +221,12 @@ PRODUCT_COPY_FILES += \
 # Scoped storage
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
 
+# Open IMS stack (AOSP ImsStack + overlays, package com.android.imsstack)
+$(call inherit-product, hardware/lineage/generic-ims/ims.mk)
+
 # Soong namespaces
 PRODUCT_SOONG_NAMESPACES += \
     $(DEVICE_PATH) \
     hardware/mainline/common \
-    hardware/mainline/kona-ril
+    hardware/mainline/kona-ril \
+    external/mainline-hw-deps

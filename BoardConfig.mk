@@ -42,7 +42,7 @@ BOARD_KERNEL_CMDLINE := \
     ignore_loglevel panic=3 oops=panic androidboot.selinux=permissive printk.always_kmsg_dump=1 printk.devkmsg=on \
     clk_ignore_unused pd_ignore_unused regulator_ignore_unused \
     arm-smmu.disable_bypass=0 swiotlb=2048 \
-    lpm_levels.sleep_disabled=1 service_locator.enable=1 \
+    service_locator.enable=1 \
     androidboot.usbcontroller=a600000.usb loop.max_part=7 \
     androidboot.hardware=kebab \
     androidboot.fstab_suffix=kebab \
