@@ -73,7 +73,6 @@ AB_OTA_PARTITIONS += \
     system \
     system_ext \
     vbmeta \
-    vbmeta_system \
     vendor
 
 # Partitions - Dynamic
