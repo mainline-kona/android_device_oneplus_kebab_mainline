@@ -4,6 +4,7 @@
 #
 
 DEVICE_PATH := device/oneplus/kebab_mainline
+FIRMWARE_PATH ?= device/oneplus/kebab_mainline-firmware
 
 TARGET_BOARD_PLATFORM := qcom
 TARGET_QCOM_SOC := sm8250
@@ -47,6 +48,16 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/init/usb_gadget_bind.sh:$(TARGET_COPY_OUT_RECOVERY)/root/system/bin/usb_gadget_bind.sh \
     $(DEVICE_PATH)/init/init.recovery.qcom.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.qcom.rc \
     $(DEVICE_PATH)/init/init.recovery.qcom.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.kebab.rc
+
+# Firmware
+PRODUCT_COPY_FILES += \
+    $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/amss.bin:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/ath11k/QCA6390/hw2.0/amss.bin \
+    $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/board-2.bin:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/ath11k/QCA6390/hw2.0/board-2.bin \
+    $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/m3.bin:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/ath11k/QCA6390/hw2.0/m3.bin \
+    $(FIRMWARE_PATH)/qca/htbtfw20.tlv:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/qca/htbtfw20.tlv \
+    $(FIRMWARE_PATH)/qca/htnv20.bin:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/qca/htnv20.bin \
+    $(FIRMWARE_PATH)/qca/htbtfw20.tlv:$(TARGET_COPY_OUT_VENDOR)/firmware/qca/htbtfw20.tlv \
+    $(FIRMWARE_PATH)/qca/htnv20.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/qca/htnv20.bin
 
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.adb.secure=0 \
