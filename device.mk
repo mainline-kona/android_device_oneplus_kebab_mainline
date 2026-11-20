@@ -188,8 +188,8 @@ PRODUCT_PACKAGES += \
 # Radio: kebab-rild (libkebab-rilqmi) is the only RIL. kebab-dataconn still
 # provides the IMS DCM server and manual QMI/DIAG tooling.
 PRODUCT_PACKAGES += \
-    kebab-dataconn \
-    kebab-voicecall \
+    kona-dataconn \
+    kona-voicecall \
     kebab-qmi-probe \
     libkebab-rilqmi \
     libcuttlefish-rild
