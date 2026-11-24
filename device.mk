@@ -60,6 +60,21 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/configs/gps.conf:$(TARGET_COPY_OUT_VENDOR)/etc/gps.conf \
     frameworks/native/data/etc/android.hardware.location.gps.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.location.gps.xml
 
+# NFC
+PRODUCT_PACKAGES += \
+    android.hardware.nfc2-service.nxp \
+    NfcNci \
+    Tag
+
+PRODUCT_COPY_FILES += \
+    $(DEVICE_PATH)/nfc/init.kebab-mainline.nfc.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.kebab-mainline.nfc.rc \
+    $(DEVICE_PATH)/nfc/libnfc-nci.conf:$(TARGET_COPY_OUT_VENDOR)/etc/libnfc-nci.conf \
+    $(DEVICE_PATH)/nfc/libnfc-nxp.conf:$(TARGET_COPY_OUT_VENDOR)/etc/libnfc-nxp.conf \
+    frameworks/native/data/etc/com.nxp.mifare.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/com.nxp.mifare.xml \
+    frameworks/native/data/etc/android.hardware.nfc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.nfc.xml \
+    frameworks/native/data/etc/android.hardware.nfc.hce.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.nfc.hce.xml \
+    frameworks/native/data/etc/android.hardware.nfc.hcef.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.nfc.hcef.xml
+
 # Bluetooth: QCA6390 has no programmed public address, so hci0 stays
 # unconfigured until one is set (derived from the serial number, as on phone2)
 PRODUCT_PACKAGES += \
