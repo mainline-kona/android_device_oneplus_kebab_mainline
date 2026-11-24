@@ -54,12 +54,6 @@ sh_binary {
 }
 
 sh_binary {
-    name: "kebab-ims-init.sh",
-    src: "init/kebab-ims-init.sh",
-    vendor: true,
-}
-
-sh_binary {
     name: "bringup-log.sh",
     src: "init/bringup-log.sh",
     vendor: true,

@@ -145,7 +145,6 @@ PRODUCT_PRODUCT_PROPERTIES += \
 
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.adb.secure=0 \
-    persist.vendor.kebab.ims_apn_type=1 \
     persist.sys.usb.config=adb \
     sys.usb.controller=a600000.usb \
     vendor.usb.controller=a600000.usb
@@ -158,7 +157,6 @@ endif
 # Init
 PRODUCT_PACKAGES += \
     bringup-log.sh \
-    kebab-ims-init.sh \
     kebab-pdready.sh \
     pd-mapper.rc \
     fstab.default \
@@ -185,16 +183,13 @@ PRODUCT_PACKAGES += \
     KebabMainlineTelephonyResTarget \
     KebabMainlineWifiResTarget
 
-# Radio: kebab-rild (libkebab-rilqmi) is the only RIL. kebab-dataconn still
-# provides the IMS DCM server and manual QMI/DIAG tooling.
+# Radio: Cuttlefish AIDL RIL (libcuttlefish-rild) + kona-dataconn + kona-voicecall
 PRODUCT_PACKAGES += \
     kona-dataconn \
     kona-voicecall \
-    kebab-qmi-probe \
-    libkebab-rilqmi \
     libcuttlefish-rild
 
-# libqmi/libqrtr runtime for kebab-rild and the probe
+# libqmi/libqrtr runtime for kona-dataconn
 PRODUCT_PACKAGES += \
     libqmi-glib \
     libqrtr-glib \

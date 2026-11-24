@@ -123,95 +123,17 @@ service vendor.bringup_logcat /vendor/bin/bringup-log.sh logcat
     oneshot
     disabled
 
-# IMS bring-up experiment, OFF by default. Stock qcrild tells the modem which APN
-# is the IMS one (QMI DSD); our RIL never does, and the modem's IMS client keeps
-# bringing the "ims" PDN up and dropping it without any SIP, and DSD GET_APN_INFO
-# (0x0033) answers "info unavailable" for every APN type. QMI_DSD_SET_APN_INFO
-# (0x0032, from the stock libqmiservices IDL): TLV 0x01 = u32 apn_type (1 = IMS),
-# u8 len, "ims"; TLV 0x10 = apn_invalid (0). The newer Set APN Type (0x0051)
-# returns NOT_SUPPORTED on this MPSS.HI.2.5 firmware.
-# Enable:  setprop persist.vendor.kebab.ims_apn_type 1   (applies now and on every boot)
-# Second request (same socket) maps the default APN (type 0) to "jionet".
-service vendor.kebab_ims_apn /vendor/bin/kebab-dataconn --qmi 0x2a 0x0032 01:0100000003696d73 10:00 + 0x0032 01:00000000066a696f6e6574 10:00
-    user root
-    group radio
-    seclabel u:r:su:s0
-    stdio_to_kmsg
-    oneshot
-    disabled
-
-# Stand-in for the stock imsdatadaemon: QMI IMS DCM server (svc 0x302). With the
-# IMS APN known, the modem's IMS client asks it to bring up the "ims" PDN
-# (PDP_ACTIVATE) and registers once it gets the address back (verified live:
-# IMSA REGISTERED, voice/SMS full service).
-service vendor.kebab_ims_dcm /vendor/bin/kebab-dataconn --ims-dcm
-    user root
-    group radio
-    seclabel u:r:su:s0
-    stdio_to_kmsg
-    disabled
-
-# SMS over IMS: WMS SET_DOMAIN_PREF_CONFIG (0x0052) TLV 0x10 lte_domain_pref = 1 (IMS).
-# Factory value is 0 (none): WMS then has no IMS transport (GET_TRANSPORT_LAYER_INFO
-# 0x0048 -> error 52) and MO SMS goes over NAS, where Jio NR SA rejects it
-# (MNSMS_REL_REQ cause 111 -> +CMS ERROR: 500). Re-sent every boot because the
-# modem's EFS write-backs are not persisted yet.
-service vendor.kebab_sms_ims /vendor/bin/kebab-dataconn --qmi 0x05 0x0052 10:01
-    user root
-    group radio
-    seclabel u:r:su:s0
-    stdio_to_kmsg
-    oneshot
-    disabled
-
 # zram swap: 50% of RAM, lz4 (zram is built into the kernel)
 on property:sys.boot_completed=1
     write /sys/block/zram0/comp_algorithm lz4
     write /proc/sys/vm/page-cluster 0
     swapon_all /vendor/etc/fstab.kebab
 
-# IMS DCM must be published before the modem boots its IMS client (stock
-# starts imsdatadaemon early too). APN/IMSS/IMSA calls run once the modem is
-# online, via the bring-up script below.
-on early-boot && property:persist.vendor.kebab.ims_apn_type=1
-    start vendor.kebab_ims_dcm
-
-on property:sys.boot_completed=1 && property:persist.vendor.kebab.ims_apn_type=1
-    start vendor.kebab_ims_init
-
-on property:init.svc.vendor.kebab_rild=running && property:persist.vendor.kebab.ims_apn_type=1
-    start vendor.kebab_ims_init
-
-# Consolidated IMS bring-up: waits for the modem, registers IMSA/IMSS
-# indications, sets the IMS APN and the WMS IMS domain preference.
-service vendor.kebab_ims_init /vendor/bin/kebab-ims-init.sh
-    user root
-    group radio
-    seclabel u:r:su:s0
-    stdio_to_kmsg
-    oneshot
-    disabled
-
-on property:persist.vendor.kebab.ims_apn_type=0
-    stop vendor.kebab_ims_dcm
-
 # CS-VOICE helper: started and stopped by the RIL around calls (the audio HAL
 # no longer starts it; vendor.audio.mainline.voice_call_service is empty). Kept
 # as a disabled init service so it can still be launched manually for debugging.
-service vendor.kebab_voicecall /vendor/bin/kebab-voicecall
+service vendor.kebab_voicecall /vendor/bin/kona-voicecall
     class main
     user audioserver
     group audio
     disabled
-
-# kebab-rild: the radio stack (libkebab-rilqmi) loaded by the AIDL rild binary.
-# Single engine: the legacy reference-ril was removed.
-service vendor.kebab_rild /vendor/bin/hw/libcuttlefish-rild -l libkebab-rilqmi.so
-    class main
-    user radio
-    group radio inet misc audio log readproc wakelock
-    capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW
-
-# When the daemon owns the IMS DCM server, kebab-dataconn must not.
-on property:persist.vendor.kebab.dcm_in_rild=1
-    stop vendor.kebab_ims_dcm
