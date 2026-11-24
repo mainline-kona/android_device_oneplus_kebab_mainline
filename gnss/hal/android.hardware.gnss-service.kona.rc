@@ -1,0 +1,4 @@
+service vendor.gnss-kona /vendor/bin/hw/android.hardware.gnss-service.kona
+    class hal
+    user gps
+    group gps system inet radio

@@ -51,9 +51,14 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/audio/ucm2/OnePlus-8T.conf:$(TARGET_COPY_OUT_VENDOR)/etc/alsa/ucm2/conf.d/sm8250/OnePlus-8T.conf \
     $(DEVICE_PATH)/audio/ucm2/HiFi.conf:$(TARGET_COPY_OUT_VENDOR)/etc/alsa/ucm2/Qualcomm/sm8250/OnePlus-8T/HiFi.conf
 
-# GNSS: stock reference config; consumed once a GNSS HAL is added
+# GNSS: QMI LOC over QRTR + AIDL HAL
+PRODUCT_PACKAGES += \
+    android.hardware.gnss-service.kona \
+    kona-gnss
+
 PRODUCT_COPY_FILES += \
-    $(DEVICE_PATH)/configs/gps.conf:$(TARGET_COPY_OUT_VENDOR)/etc/gps.conf
+    $(DEVICE_PATH)/configs/gps.conf:$(TARGET_COPY_OUT_VENDOR)/etc/gps.conf \
+    frameworks/native/data/etc/android.hardware.location.gps.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.location.gps.xml
 
 # Bluetooth: QCA6390 has no programmed public address, so hci0 stays
 # unconfigured until one is set (derived from the serial number, as on phone2)
@@ -215,6 +220,9 @@ PRODUCT_COPY_FILES += \
 
 # Scoped storage
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
+
+# Shipping API level
+TARGET_FOLLOWS_LATEST_SHIPPING_API_LEVEL := true
 
 # Open IMS stack (AOSP ImsStack + overlays, package com.android.imsstack)
 $(call inherit-product, hardware/lineage/generic-ims/ims.mk)
