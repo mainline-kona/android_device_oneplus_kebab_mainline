@@ -4,11 +4,12 @@
 #
 
 # HALs
-/vendor/bin/hw/android\.hardware\.gatekeeper-service-qti	u:object_r:hal_gatekeeper_default_exec:s0
+/vendor/bin/hw/android\.hardware\.biometrics\.fingerprint-service\.kebab	u:object_r:hal_fingerprint_default_exec:s0
+/vendor/bin/hw/android\.hardware\.gatekeeper@1\.0-service-qti		u:object_r:hal_gatekeeper_default_exec:s0
 /vendor/bin/hw/android\.hardware\.gnss-service\.kona		u:object_r:hal_gnss_default_exec:s0
+/vendor/bin/hw/android\.hardware\.keymaster@4\.1-service-qti		u:object_r:hal_keymaster_default_exec:s0
 /vendor/bin/hw/android\.hardware\.light-service\.lineage	u:object_r:hal_light_default_exec:s0
 /vendor/bin/hw/android\.hardware\.nfc2-service\.nxp		u:object_r:hal_nfc_default_exec:s0
-/vendor/bin/hw/android\.hardware\.security\.keymint-service-qti	u:object_r:hal_keymint_default_exec:s0
 /vendor/bin/hw/android\.hardware\.usb-service\.basic		u:object_r:hal_usb_default_exec:s0
 
 # Vendor binaries
@@ -23,6 +24,9 @@
 
 # QSEE apps outside QTEE's object interface
 /dev/qseecom_bridge	u:object_r:tee_device:s0
+
+# Goodix optical UDFPS sensor
+/dev/goodix_fp		u:object_r:vendor_goodix_fp_device:s0
 
 # Telephony (external SDX55 over MHI)
 /dev/wwan0at[0-9]+	u:object_r:radio_device:s0

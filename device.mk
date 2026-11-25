@@ -26,6 +26,10 @@ TARGET_SUPPORTS_SUSPEND := false
 TARGET_MEDIA_C2_HAL := v4l2_codec2
 TARGET_V4L2_CODEC2_USE_EXAMPLE_CONFIGURATION := false
 
+# Hardware-backed security: stock Qualcomm Keymaster 4.1 + Gatekeeper 1.0 + qseecomd
+# over our open-source external/qcomtee (libQSEEComAPI) + kernel qcom_qseecom_bridge
+TARGET_SUPPORTS_HARDWARE_BACKED_SECURITY := true
+
 $(call inherit-product, device/mainline/qcom-common/mainline_qcom-common.mk)
 
 # Media (V4L2 Codec2, see TARGET_MEDIA_C2_HAL above)
@@ -96,6 +100,51 @@ PRODUCT_COPY_FILES += \
 # unconfigured until one is set (derived from the serial number, as on phone2)
 PRODUCT_PACKAGES += \
     bdaddr
+
+# QTEE / QSEECom (open-source external/qcomtee + kernel qcom_qseecom_bridge)
+# + stock qseecomd RPMB/storage listeners + hardware Keymaster 4.1 & Gatekeeper 1.0
+PRODUCT_PACKAGES += \
+    libQSEEComAPI \
+    libion_dmaheap \
+    libxml2.vendor \
+    android.hardware.gatekeeper@1.0.vendor \
+    android.hardware.keymaster@4.0.vendor \
+    android.hardware.keymaster@4.1.vendor
+
+PRODUCT_COPY_FILES += \
+    $(FIRMWARE_PATH)/qtee/bin/qseecomd:$(TARGET_COPY_OUT_VENDOR)/bin/qseecomd \
+    $(FIRMWARE_PATH)/qtee/bin/hw/android.hardware.gatekeeper@1.0-service-qti:$(TARGET_COPY_OUT_VENDOR)/bin/hw/android.hardware.gatekeeper@1.0-service-qti \
+    $(FIRMWARE_PATH)/qtee/etc/init/android.hardware.gatekeeper@1.0-service-qti.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/android.hardware.gatekeeper@1.0-service-qti.rc \
+    $(FIRMWARE_PATH)/qtee/lib64/hw/android.hardware.gatekeeper@1.0-impl-qti.so:$(TARGET_COPY_OUT_VENDOR)/lib64/hw/android.hardware.gatekeeper@1.0-impl-qti.so \
+    $(FIRMWARE_PATH)/qtee/bin/hw/android.hardware.keymaster@4.1-service-qti:$(TARGET_COPY_OUT_VENDOR)/bin/hw/android.hardware.keymaster@4.1-service-qti \
+    $(FIRMWARE_PATH)/qtee/etc/init/android.hardware.keymaster@4.1-service-qti.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/android.hardware.keymaster@4.1-service-qti.rc \
+    $(FIRMWARE_PATH)/qtee/lib64/librpmb.so:$(TARGET_COPY_OUT_VENDOR)/lib64/librpmb.so \
+    $(FIRMWARE_PATH)/qtee/lib64/libssd.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libssd.so \
+    $(FIRMWARE_PATH)/qtee/lib64/libdrmfs.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libdrmfs.so \
+    $(FIRMWARE_PATH)/qtee/lib64/libdrmtime.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libdrmtime.so \
+    $(FIRMWARE_PATH)/qtee/lib64/libqisl.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libqisl.so \
+    $(FIRMWARE_PATH)/qtee/lib64/libspl.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libspl.so \
+    $(FIRMWARE_PATH)/qtee/lib64/libGPreqcancel.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libGPreqcancel.so \
+    $(FIRMWARE_PATH)/qtee/lib64/libGPreqcancel_svc.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libGPreqcancel_svc.so \
+    $(FIRMWARE_PATH)/qtee/lib64/libdiag.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libdiag.so \
+    $(FIRMWARE_PATH)/qtee/lib64/libtime_genoff.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libtime_genoff.so \
+    $(FIRMWARE_PATH)/qtee/lib64/libkeymasterdeviceutils.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libkeymasterdeviceutils.so \
+    $(FIRMWARE_PATH)/qtee/lib64/libkeymasterutils.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libkeymasterutils.so \
+    $(FIRMWARE_PATH)/qtee/lib64/libqtikeymaster4.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libqtikeymaster4.so \
+    $(FIRMWARE_PATH)/qtee/lib64/libqcbor.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libqcbor.so \
+    $(FIRMWARE_PATH)/qtee/lib64/libspcom.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libspcom.so
+
+# Fingerprint: Goodix optical UDFPS AIDL HAL (G6_3 gfp9638 & G6_7 gfp9678) over QTEE
+PRODUCT_PACKAGES += \
+    android.hardware.biometrics.fingerprint-service.kebab
+
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.fingerprint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.fingerprint.xml \
+    $(FIRMWARE_PATH)/fingerprint/lib64/hw/fingerprint.19805_goodix9638_G6_3.default.so:$(TARGET_COPY_OUT_VENDOR)/lib64/hw/fingerprint.19805_goodix9638_G6_3.default.so \
+    $(FIRMWARE_PATH)/fingerprint/lib64/libgf_hal_19805_G6_3_oplus.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libgf_hal_19805_G6_3_oplus.so \
+    $(FIRMWARE_PATH)/fingerprint/lib64/hw/fingerprint.19805_goodix9678_G6_7.default.so:$(TARGET_COPY_OUT_VENDOR)/lib64/hw/fingerprint.19805_goodix9678_G6_7.default.so \
+    $(FIRMWARE_PATH)/fingerprint/lib64/libgf_hal_19805_G6_7_oplus.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libgf_hal_19805_G6_7_oplus.so \
+    $(call find-copy-subdir-files,*,$(FIRMWARE_PATH)/fingerprint/firmware/,$(TARGET_COPY_OUT_VENDOR)/firmware/)
 
 # DSP: the SLPI runs the sensor core; serve it the stock sensor configs,
 # registry and socinfo through hexagonrpcd (same layout as phone2_mainline)

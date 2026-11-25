@@ -1,0 +1,18 @@
+on init
+    chown system system /sys/kernel/oplus_display/hbm
+    chmod 0660 /sys/kernel/oplus_display/hbm
+    chown system system /sys/kernel/oplus_display/notify_fppress
+    chmod 0660 /sys/kernel/oplus_display/notify_fppress
+
+on early-boot
+    mkdir /data/vendor/fingerprint 0770 system system
+    mkdir /data/vendor/goodix 0770 system system
+
+service vendor.fingerprint-default /vendor/bin/hw/android.hardware.biometrics.fingerprint-service.kebab
+    # "class hal" causes a race condition on some devices due to files created
+    # in /data. As a workaround, postpone startup until later in boot once
+    # /data is mounted.
+    class late_start
+    user system
+    group system input uhid
+    shutdown critical

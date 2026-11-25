@@ -1,0 +1,3 @@
+persist.vendor.fingerprint.	u:object_r:vendor_fingerprint_prop:s0
+ro.vendor.fingerprint.		u:object_r:vendor_fingerprint_prop:s0
+vendor.gatekeeper.		u:object_r:vendor_gatekeeper_prop:s0

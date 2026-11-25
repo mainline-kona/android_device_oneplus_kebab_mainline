@@ -18,8 +18,11 @@ firmware_directories /lib/firmware/ /system/etc/firmware/ /vendor/firmware/ /odm
 # Storage
 /dev/block/by-name/*      0660   root       system
 
-# QTEE & QSEECom bridge for KeyMint / Gatekeeper / RPMB
+# QTEE & QSEECom bridge for Keymaster / Gatekeeper / RPMB / Goodix TA
 /dev/tee0                 0660   system     system
 /dev/qseecom_bridge       0660   system     system
 /dev/0:0:0:49476          0660   system     system
 /dev/ufs-bsg0             0660   system     system
+
+# Goodix optical UDFPS sensor
+/dev/goodix_fp            0660   system     system
