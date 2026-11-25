@@ -131,6 +131,12 @@ PRODUCT_COPY_FILES += \
     $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/amss.bin:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/ath11k/QCA6390/hw2.0/amss.bin \
     $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/board-2.bin:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/ath11k/QCA6390/hw2.0/board-2.bin \
     $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/m3.bin:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/ath11k/QCA6390/hw2.0/m3.bin \
+    $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/amss.bin:$(TARGET_COPY_OUT_RAMDISK)/lib/firmware/ath11k/QCA6390/hw2.0/amss.bin \
+    $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/board-2.bin:$(TARGET_COPY_OUT_RAMDISK)/lib/firmware/ath11k/QCA6390/hw2.0/board-2.bin \
+    $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/m3.bin:$(TARGET_COPY_OUT_RAMDISK)/lib/firmware/ath11k/QCA6390/hw2.0/m3.bin \
+    $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/amss.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/ath11k/QCA6390/hw2.0/amss.bin \
+    $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/board-2.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/ath11k/QCA6390/hw2.0/board-2.bin \
+    $(FIRMWARE_PATH)/ath11k/QCA6390/hw2.0/m3.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/ath11k/QCA6390/hw2.0/m3.bin \
     $(FIRMWARE_PATH)/qca/htbtfw20.tlv:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/qca/htbtfw20.tlv \
     $(FIRMWARE_PATH)/qca/htnv20.bin:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/qca/htnv20.bin \
     $(FIRMWARE_PATH)/qca/htbtfw20.tlv:$(TARGET_COPY_OUT_VENDOR)/firmware/qca/htbtfw20.tlv \
