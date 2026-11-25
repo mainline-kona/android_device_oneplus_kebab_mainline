@@ -16,8 +16,9 @@ debug.hwui.renderer=skiagl
 # Light
 vendor.light.backlight.disable=false
 
-# Sensors: libssc over SLPI (keep wait_for_sensors=0 for fast ~15s boot)
+# Sensors: libssc over SLPI (5/5 supported sensors; skip missing ambient_light name so boot doesn't stall)
 vendor.sensors.backends=libssc,iio
+vendor.sensors.ssc.sensors=accel,gyro,magn,proximity,compass
 vendor.sensors.wait_for_sensors=0
 vendor.sensors.ssc.discovery_wait_ms=5000
 

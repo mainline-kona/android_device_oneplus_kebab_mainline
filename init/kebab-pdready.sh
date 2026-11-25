@@ -7,7 +7,7 @@ while [ $i -lt 100 ]; do
     sleep 0.1
     i=$((i + 1))
 done
-sleep 1
+sleep 0.2
 # If ath11k_pci hit the switch_root window before /vendor was mounted (m3.bin -ENOENT),
 # rebind it now that /vendor/firmware is mounted so wlan0 always comes up.
 if [ ! -d /sys/class/net/wlan0 ] && [ -e /sys/bus/pci/drivers/ath11k_pci/0000:01:00.0 ]; then
