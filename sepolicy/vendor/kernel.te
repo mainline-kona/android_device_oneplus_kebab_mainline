@@ -1,0 +1,1 @@
+allow kernel firmware_mnt_file:system firmware_load;

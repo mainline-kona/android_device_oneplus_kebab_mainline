@@ -4,13 +4,20 @@
 #
 
 # Backlight
-genfscon sysfs /devices/platform/soc@0/ae00000.display-subsystem/ae94000.dsi.0/backlight	u:object_r:vendor_sysfs_backlight:s0
+genfscon sysfs /devices/platform/soc@0/ae00000.display-subsystem/ae94000.dsi/ae94000.dsi.0/backlight	u:object_r:vendor_sysfs_backlight:s0
 
 # Bluetooth address seed
 genfscon sysfs /devices/soc0/serial_number	u:object_r:vendor_sysfs_soc_info:s0
 
-# Battery & Fuel Gauge
-genfscon sysfs /devices/platform/soc@0/990000.i2c/i2c-16/16-0055/power_supply	u:object_r:sysfs_batteryinfo:s0
+# Battery, Fuel Gauge & Type-C power supply
+genfscon sysfs /devices/platform/soc@0/8c0000.geniqup/888000.i2c/i2c-16/16-0055/power_supply			u:object_r:sysfs_batteryinfo:s0
+genfscon sysfs /devices/platform/soc@0/c440000.spmi/spmi-0/0-02/c440000.spmi:pmic@2:typec@1500/power_supply	u:object_r:sysfs_batteryinfo:s0
+
+# Remoteproc sysfs (SLPI, CDSP, ADSP) for pd-mapper / tqftpserv / rmtfs
+genfscon sysfs /class/remoteproc							u:object_r:vendor_sysfs_remoteproc:s0
+genfscon sysfs /devices/platform/soc@0/17300000.remoteproc/remoteproc			u:object_r:vendor_sysfs_remoteproc:s0
+genfscon sysfs /devices/platform/soc@0/5c00000.remoteproc/remoteproc			u:object_r:vendor_sysfs_remoteproc:s0
+genfscon sysfs /devices/platform/soc@0/9890000.remoteproc/remoteproc			u:object_r:vendor_sysfs_remoteproc:s0
 
 # SDX55 raw-IP netdev (mhi_net on IP_HW0): netd sets its MTU via sysfs
 genfscon sysfs /devices/platform/soc@0/1c10000.pcie/pci0002:00/0002:00:00.0/0002:01:00.0/mhi0/mhi0_IP_HW0/net	u:object_r:sysfs_net:s0
