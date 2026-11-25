@@ -84,6 +84,11 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.thermal-service.kona
 
+# Health: AIDL v5 HAL (2S bq28z610 normalization, SOH, MP2650 policy, UFS health)
+PRODUCT_PACKAGES += \
+    android.hardware.health-service.kona \
+    android.hardware.health-service.kona_recovery
+
 # Radio: AIDL v5 RIL (libcuttlefish-rild) + QMI multi-APN data (kona-dataconn)
 # + Open AOSP VoLTE / IMS stack (generic-ims: ImsStack, ImsMedia, Iwlan, QNS, CarrierSettings)
 $(call inherit-product, hardware/lineage/generic-ims/ims.mk)

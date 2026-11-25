@@ -7,6 +7,7 @@
 /vendor/bin/hw/android\.hardware\.biometrics\.fingerprint-service\.kebab	u:object_r:hal_fingerprint_default_exec:s0
 /vendor/bin/hw/android\.hardware\.gatekeeper@1\.0-service-qti		u:object_r:hal_gatekeeper_default_exec:s0
 /vendor/bin/hw/android\.hardware\.gnss-service\.kona		u:object_r:hal_gnss_default_exec:s0
+/vendor/bin/hw/android\.hardware\.health-service\.kona		u:object_r:hal_health_default_exec:s0
 /vendor/bin/hw/android\.hardware\.keymaster@4\.1-service-qti		u:object_r:hal_keymaster_default_exec:s0
 /vendor/bin/hw/android\.hardware\.light-service\.lineage	u:object_r:hal_light_default_exec:s0
 /vendor/bin/hw/android\.hardware\.nfc2-service\.nxp		u:object_r:hal_nfc_default_exec:s0

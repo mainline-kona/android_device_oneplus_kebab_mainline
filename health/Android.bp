@@ -1,0 +1,46 @@
+//
+// Copyright (C) 2026 The PenguinOS Project
+// SPDX-License-Identifier: Apache-2.0
+//
+
+cc_defaults {
+    name: "android.hardware.health-service.kona-defaults",
+    relative_install_path: "hw",
+    vintf_fragments: ["android.hardware.health-service.kona.xml"],
+    defaults: [
+        "libhealth_aidl_impl_user",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+    static_libs: [
+        "libhealth_aidl_impl",
+    ],
+    srcs: [
+        "HealthKona.cpp",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.health-service.kona",
+    vendor: true,
+    defaults: ["android.hardware.health-service.kona-defaults"],
+    init_rc: ["android.hardware.health-service.kona.rc"],
+    overrides: [
+        "android.hardware.health-service.example",
+        "charger",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.health-service.kona_recovery",
+    recovery: true,
+    defaults: ["android.hardware.health-service.kona-defaults"],
+    init_rc: ["android.hardware.health-service.kona_recovery.rc"],
+    overrides: [
+        "android.hardware.health-service.example_recovery",
+        "charger.recovery",
+    ],
+}
