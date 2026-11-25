@@ -8,8 +8,8 @@
 
 - **Device**: OnePlus 8T (`kebab`, SM8250 / Kona + external Qualcomm SDX55 5G modem over PCIe2/MHI)
 - **ROM**: LineageOS 24.0 (Android 17) at `/serverhive5/zenzer0s/los`
-- **Device Tree**: `/serverhive5/zenzer0s/los/device/oneplus/kebab_mainline` (branch `main`, HEAD `02a6447`)
-- **RIL Repo**: `/serverhive5/zenzer0s/los/hardware/mainline/kona-ril` (branch `empty`, HEAD `07017e3`)
+- **Device Tree**: `/serverhive5/zenzer0s/los/device/oneplus/kebab_mainline` (branch `main`)
+- **RIL Repo**: `/serverhive5/zenzer0s/los/hardware/mainline/kona-ril` (branch `empty`, HEAD `f0d5d02`)
 - **Kernel**: `/serverhive5/zenzer0s/mainline-kona` (branch `android17-6.18-lts-8t`, ACK `android17-6.18-lts`, HEAD `3a5bd1dd5b94`)
 - **Reference Trees**:
   - Stock kebab kernel/DTS: `/serverhive5/zenzer0s/ref-stock-kebab`
@@ -46,37 +46,36 @@
   - **Phase 1**: Kernel `CONFIG_RMNET=y` (`3a5bd1dd5b94`) + `kona-dataconn` (`825b90b`, `24a3df1`, `b008e30`): dynamic QRTR node 3 lookup, `mhi_hwip0`, `WDA_GET_DATA_FORMAT(PCIE, 4)` multi-APN guard, `WDS_SET_IP_FAMILY` per client, IPv6-first dual-stack ordering, raw TLV `0x2E` IPv6 P-CSCF extraction (tested live simultaneously on `jionet` `rmnet_data0` + `ims` `rmnet_data1` with both Jio IPv6 P-CSCFs).
   - **Phase 2**: `libcuttlefish-rild` + all 10 AIDL radio services registered, zero `rild` AVCs, Jio SIM `LOADED` (`carrierId=2018`, real IMEI/ICCID/IMSI/MSISDN), `IN_SERVICE` on **`NR_SA`** (`Jio True5G Jio`), 36-bit `CellIdentityNr` (`nci=4515725314`, `tac=20`), real QMI NAS 5G NR signal (`ssRsrp=-97 dBm, ssRsrq=-11 dB, ssSinr=+23 dB`, live bars), and clean Airplane Mode ON→OFF recovery (`d4751f7`).
   - **Phase 3**: Android Mobile Data + `clatd` 464XLAT (`rmnet_data0` Jio IPv6 MTU 1400 + `v4-rmnet_data0` `192.0.0.4/32` `Nat64Prefix: 64:ff9b::/96`), live 5G SA DNS (`12–25 ms`) + `ping6 2405:200:800::11` (`3/3`, `0% loss`, `32 ms`) with valid TCP/ICMPv6 checksums (`tcpdump` confirmed), clean teardown/reconnect across Airplane Mode.
+  - **Phase 5 Foundation (Cold-Boot RIL, 5G↔4G Switching, QMI UIM ISIM, `generic-ims` Bound — ALL PASSED LIVE!)**:
+    - **Cold-Boot RIL (`aabb70b`)**: `libcuttlefish-rild` came up cleanly on cold boot with zero restarts (`gsm.sim.state=LOADED`, `IN_SERVICE`, `kona-dataconn jionet` up automatically).
+    - **Real 5G ↔ 4G LTE Switching (`07017e3`)**: `QMI NAS SetSystemSelectionPreference` (`0x0033`) switched SDX55 live between `NR_SA` (`bitmap=0x11ce0e -> mode_pref=0x005c`) and `LTE` (`bitmap=0x1ce0e -> mode_pref=0x001c`, `gsm.network.type=LTE`, `JIO 4G Jio`, LTE QMI signal `rssi=-67 rsrp=-97 rsrq=-9 rssnr=11 level=4` — full 4/4 bars!).
+    - **QMI UIM ISIM Records (`07017e3`)**: `IsimUiccRecords` loaded `EF_ISIM_IMPI`, `EF_ISIM_DOMAIN`, `EF_ISIM_IST` live via QMI UIM (`0x0042`/`0x003F`/`0x003B`).
+    - **Open AOSP IMS (`02a6447`)**: All 4 IMS processes (`com.android.imsstack`, `imsmedia`, `iwlan`, `qns`) running cleanly on cold boot; `ImsResolver` bound `com.android.imsstack` for `MMTEL` + `EMERGENCY_MMTEL` (`state=READY`); Jio `405861` CarrierConfig (`carrier_volte_available_bool=true`, `ims.supported_rats=[3, 5, 6]`) & `ims` APN (`IPV4V6`) active.
 
 ---
 
 ## 3. Committed Locally & Ready to Build/Flash Next (NOT Yet Flashed)
 
-These commits are already compile-verified and committed locally, waiting for the user's next build:
+Only **ONE** `vendor.img` commit is pending flash to unblock VoLTE / VoNR registration:
 
-1. **`hardware/mainline/kona-ril` (`aabb70b`, `07017e3`)**:
-   - **Boot-time `AT+CFUN=1` race fix (`aabb70b`)**: `initializeCallback()` keeps `sState = UNAVAILABLE` until AT handshake & URC setup complete (prevents `com.android.phone` racing `AT+CFUN=1` during cold boot), skips redundant `AT+CFUN=1` when already online, and calls `stopDataconn(0)` on radio-off.
-   - **Real 5G ↔ 4G LTE / 3G / 2G network switching (`07017e3`)**: Wired `RIL_REQUEST_SET_ALLOWED_NETWORK_TYPES_BITMAP` to raw `AF_QIPCRTR` **`QMI_NAS_SET_SYSTEM_SELECTION_PREFERENCE` (`0x0033`)** (previously a no-op stub that ignored LTE/4G toggle).
-   - **Phase 5 QMI UIM ISIM APDU/AKA & `SIM_IO` (`07017e3`)**: Because SDX55 AT returns `ERROR` for `AT+CCHO`/`AT+CGLA` and `AT+CRSM` only hits USIM (not ISIM), implemented raw `AF_QIPCRTR` `QMI_SERVICE_UIM` (`0x0042` OpenLogicalChannel, `0x003F` Close, `0x003B` SendAPDU — **already live-tested on Jio ISIM, read real `EF_IMPI`!**) for `requestSimOpenChannel`, `requestSimCloseChannel`, `requestSimTransmitApduChannel`, `requestSimAuthentication` (with automatic `61 xx` `GET RESPONSE`), ISIM `requestSIM_IO` (`0x6F02`/`0x6F03`/`0x6F04`/`0x6F07`/`0x6F09`), and exposed ISIM AID `A0000000871004` in `getCardStatus()`.
-2. **`device/oneplus/kebab_mainline` (`02a6447`)**:
-   - Wired **Phase 5 Open AOSP VoLTE / IMS (`hardware/lineage/generic-ims/ims.mk`)** into `device.mk` (`ImsStack`, `ImsMediaService`, `Iwlan`, `QualifiedNetworksService`, `CarrierSettings` incl. `rjio_in.pb`, `FrameworkResOverlayIms`, `TelephonyOverlayIms`, `android.hardware.telephony.ims.prebuilt.xml`, with `config_use_voip_mode_for_ims=true`).
+1. **`hardware/mainline/kona-ril` (`f0d5d02`) — Fix `VOPS_NOT_SUPPORTED` IMS PDN blocker**:
+   - **What blocked IMS on the live test**: `DataNetworkController` rejected `com.android.imsstack`'s `IMS&MMTEL` PDN request with `Data disallowed reasons: VOPS_NOT_SUPPORTED` on both `NR` and `LTE` because `ril_service.cpp` hardcoded `isVopsSupported = false` (LTE) and `vopsSupported = VOPS_NOT_SUPPORTED` (NR SA).
+   - **Fix**: Updated V1_6 & V1_5 `getVoiceRegistrationStateResponse()` and `getDataRegistrationStateResponse()` in `ril_service.cpp` to report `lteVopsInfo.isVopsSupported = true` (LTE/LTE_CA) and `nrVopsInfo.vopsSupported = VOPS_OVER_3GPP` + `EMC/EMF_NR_CONNECTED_TO_5GCN` (NR SA) whenever registered (`REG_HOME` / `REG_ROAMING`). Compile-verified cleanly (`REAL_COMPILE_OK`).
 
-**Next Build Command for User**:
+**Next Build Command for User (vendor only!)**:
 ```bash
-m systemimage systemextimage productimage vendorimage
+m vendorimage
 ```
-(or `m superimage` if flashing `super.img`).
+(then flash `vendor.img`).
 
 ---
 
 ## 4. Immediate Next Steps When Resuming
 
-1. **Live-Test the New Build (Phase 4 & Phase 5)**:
-   - Verify **cold-boot RIL** registers automatically on `Jio True5G Jio` without needing `rild` restart (`aabb70b`).
-   - Verify **5G ↔ LTE/4G switching** in Settings actually switches SDX55 between `NR_SA` and `LTE` (`QMI NAS SetSystemSelectionPreference` in `logcat -b radio`).
-   - Verify **`IsimUiccRecords`** loads `EF_IMPI`, `EF_DOMAIN`, `EF_IMPU` via QMI UIM (`logcat -b radio | grep IsimUiccRecords`).
-   - Verify **`ImsStack` VoLTE / VoNR registration**:
-     - `dumpsys ims` -> `com.android.imsstack` bound, `ims` PDN (`rmnet_data1`, mux 2) up with Jio IPv6 + P-CSCFs, `requestSimAuthentication(QMI UIM)` succeeds, `MMTEL` **REGISTERED** (`VOICE` + `SMS`).
-     - Test incoming/outgoing VoLTE call (2-way VoIP-mode audio) + SMS (Phase 4 & SMS-over-IMS).
+1. **Live-Test VoLTE / VoNR Registration & Calls (Phase 4 & Phase 5)** after flashing `vendor.img`:
+   - Verify `DataNetworkController` allows `IMS&MMTEL` PDN -> `kona-dataconn ims ipv4v6 2` brings up `rmnet_data1` with Jio IPv6 + P-CSCFs.
+   - Verify `com.android.imsstack` authenticates via QMI UIM ISIM AKA (`requestSimAuthentication`) and registers `MMTEL` (`VOICE` + `SMS`, `HD`/`VoLTE` icon).
+   - Test incoming/outgoing VoLTE call (2-way VoIP-mode audio via `config_use_voip_mode_for_ims=true`) + SMS (Phase 4 & SMS-over-IMS).
 2. **UDFPS Sensor-Only HBM Dimming (User Requested Earlier — Pending Choice)**:
    - `amb655x` only has Global HBM (no hardware Local HBM).
    - Stock `amb655x` brightness-to-alpha LUT is already located at `/serverhive5/zenzer0s/ref-stock-kebab/kernel/arch/arm64/boot/dts/vendor/oplus/kebab/dsi-panel-oplus20828-samsung-amb655x-1080-2400-120fps.dtsi` (`oplus,dsi-fod-brightness`, lines 671–691), and LineageOS 24.0 SystemUI has native `UdfpsHelper.kt` (`config_udfpsFrameworkDimming`).

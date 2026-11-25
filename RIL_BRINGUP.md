@@ -147,10 +147,13 @@ Captured directly from live hardware (`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1.547
 - [x] Wired `hardware/lineage/generic-ims/ims.mk` into `device.mk` (`ImsStack`, `ImsMediaService`, `Iwlan`, `QualifiedNetworksService`, `CarrierSettings` incl. `rjio_in.pb`, `FrameworkResOverlayIms`, `TelephonyOverlayIms`, `android.hardware.telephony.ims.prebuilt.xml`).
 - [x] Dropped conflicting `vendor.qti.iwlan` strings from `rro/FrameworksResTarget/res/values/config.xml` and verified `config_ims_mmtel_package=com.android.imsstack` & `config_use_voip_mode_for_ims=true`.
 - [x] Verified `ims` PDN (`rmnet_data1`, mux 2) brings up real Jio IPv6 + both IPv6 P-CSCF addresses (`2405:200:642:b471:21::4c`, `2405:200:607:b471:21::112`).
-- [ ] **Phase 5 Live Test** (after building `vendor`, `system_ext`, `product`):
-  - [ ] Switching Preferred Network Type (`5G` <-> `LTE/4G`) switches SDX55 cleanly between `NR_SA` and `LTE`.
-  - [ ] `IsimUiccRecords` loads `EF_IMPI`, `EF_DOMAIN`, `EF_IMPU` cleanly via QMI UIM.
-  - [ ] `dumpsys ims` shows `ImsStack` bound, `MMTEL` **REGISTERED**, `VOICE` + `SMS` capabilities available.
+- [x] **Phase 5 Live Test — Partial Pass & Exact Blocker Fixed**:
+  - [x] Cold-boot RIL (`aabb70b`) registered `IN_SERVICE` automatically on first boot with zero `rild` restart!
+  - [x] Switching Preferred Network Type (`5G` <-> `LTE/4G`) switched SDX55 live between `NR_SA` and `LTE` (`QMI NAS SetSystemSelectionPreference bitmap=0x11ce0e -> 0x005c` & `0x1ce0e -> 0x001c`, `gsm.network.type=LTE`, LTE QMI signal `rssi=-67 rsrp=-97 rsrq=-9 rssnr=11 level=4` full 4/4 bars!).
+  - [x] `IsimUiccRecords` loaded `EF_ISIM_IMPI`, `EF_ISIM_DOMAIN`, `EF_ISIM_IST` live via QMI UIM!
+  - [x] All 4 IMS processes (`com.android.imsstack`, `imsmedia`, `iwlan`, `qns`) running cleanly on cold boot; `ImsResolver` bound `com.android.imsstack` for `MMTEL` & `EMERGENCY_MMTEL` (`state=READY`); Jio `405861` CarrierConfig (`carrier_volte_available_bool=true`, `ims.supported_rats=[3, 5, 6]`) & `ims` APN (`IPV4V6`) active.
+  - [x] **Fixed VoLTE/VoNR PDN Blocker (`VOPS_NOT_SUPPORTED`)**: `ril_service.cpp` hardcoded `isVopsSupported = false` (LTE) and `vopsSupported = VOPS_NOT_SUPPORTED` (NR SA), causing `DataNetworkController` to block `com.android.imsstack`'s `IMS&MMTEL` PDN request. Fixed both V1_6 & V1_5 voice/data registration responses in `ril_service.cpp` to report `isVopsSupported = true` (LTE) and `VOPS_OVER_3GPP` (NR SA) when registered (`vendor.img` only).
+  - [ ] After flashing `vendor.img`: `ims` PDN (`rmnet_data1`, mux 2) activates, `dumpsys ims` shows `MMTEL` **REGISTERED** (`VOICE` + `SMS`).
   - [ ] Status bar shows `VoLTE` / `HD` icon; SIM settings show VoLTE & Wi-Fi Calling toggles.
   - [ ] Place & receive real VoLTE calls -> clear 2-way audio on earpiece, speakerphone, mute, DTMF, and clean hangup!
 
@@ -167,4 +170,5 @@ Captured directly from live hardware (`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1.547
 |---|---|---|
 | 2026-11-25 | Phase 0 | Verified `tqftpserv -i 3` MCFG load, QRTR node 3 QMI services (DMS/UIM/NAS/WDA/WDS/WMS/VOICE/IMSA/DSD), live Jio 4G LTE registration (`CSQ=26`, `CEREG=0,1`), and identified SDX55 AT gaps (`AT+CCHO`/`AT+CGLA`/`AT+CESQ` return `ERROR`) + missing kernel `CONFIG_RMNET`. Created `RIL_BRINGUP.md`. |
 | 2026-11-25 | Phase 1 | **PASSED LIVE**: `CONFIG_RMNET=y` + fixed `kona-dataconn` brought up simultaneous `jionet` (`rmnet_data0`, Jio 5G SA n78 IPv6, 31.5 ms RTT, 0% loss) + `ims` (`rmnet_data1` + real IPv6 P-CSCF via TLV `0x2E`) and cleanly tore down on `SIGTERM`. |
-| 2026-11-25 | Phase 2+3 | Wired `libcuttlefish-rild` + `kona-dataconn` + telephony permissions + `rild_exec` sepolicy + 5G SA `C5GREG` + negotiated `protocol=` reporting into `device.mk` & `kona-ril`. Ready to build & live-test (`m vendorimage odmimage`). |
+| 2026-11-25 | Phase 2+3 | **PASSED LIVE**: `libcuttlefish-rild` + `kona-dataconn` registered Jio 5G SA (`NR_SA`), real QMI NAS 5G/LTE signal bars, 464XLAT mobile data (`rmnet_data0` + `v4-rmnet_data0`), Airplane Mode recovery, and clean cold boot (`aabb70b`). |
+| 2026-11-25 | Phase 5 | **Live Test**: Cold-boot RIL, 5G<->4G LTE switching (`QMI NAS 0x0033`), QMI UIM ISIM records (`IMPI`/`DOMAIN`/`IST`), and `com.android.imsstack` `MMTEL READY` all PASSED! Found & fixed the exact IMS PDN blocker (`VOPS_NOT_SUPPORTED` hardcoded in `ril_service.cpp`) — ready for `m vendorimage` + flash `vendor.img`. |
