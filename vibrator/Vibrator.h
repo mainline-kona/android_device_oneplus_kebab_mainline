@@ -69,7 +69,9 @@ class Vibrator : public BnVibrator {
     ndk::ScopedAStatus composePwleV2(const CompositePwleV2& composite,
                                      const std::shared_ptr<IVibratorCallback>& callback) override;
 
-    void setGlobalVibrationCallback(const std::shared_ptr<IVibratorCallback>& callback);
+    // Attaches a callback to fire when the current active vibration finishes.
+    // Returns false if no vibration is currently active.
+    bool setGlobalVibrationCallback(const std::shared_ptr<IVibratorCallback>& callback);
 
   private:
     struct RichTapApi {
@@ -101,6 +103,7 @@ class Vibrator : public BnVibrator {
     std::condition_variable mCv;
     uint64_t mSeq GUARDED_BY(mMutex) = 0;
     bool mShutdown GUARDED_BY(mMutex) = false;
+    bool mActive GUARDED_BY(mMutex) = false;
     bool mHasTask GUARDED_BY(mMutex) = false;
     std::function<void(uint64_t)> mPendingTask GUARDED_BY(mMutex);
     uint8_t mAmplitude GUARDED_BY(mMutex) = 255;

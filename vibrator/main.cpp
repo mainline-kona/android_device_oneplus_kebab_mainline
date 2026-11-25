@@ -16,7 +16,7 @@ using aidl::android::hardware::vibrator::Vibrator;
 using aidl::android::hardware::vibrator::VibratorManager;
 
 int main() {
-    ABinderProcess_setThreadPoolMaxThreadCount(0);
+    ABinderProcess_setThreadPoolMaxThreadCount(2);
 
     auto vib = ndk::SharedRefBase::make<Vibrator>();
     vib->init();

@@ -137,6 +137,7 @@ bool Vibrator::init() {
 
 void Vibrator::stopActiveLocked() {
     mSeq++;
+    mActive = false;
     mHasTask = false;
     mPendingTask = nullptr;
     mCv.notify_all();
@@ -147,6 +148,7 @@ void Vibrator::stopActiveLocked() {
 }
 
 void Vibrator::scheduleAsyncLocked(uint64_t seq, std::function<void(uint64_t)> task) {
+    mActive = true;
     mPendingTask = std::move(task);
     mHasTask = true;
     mCv.notify_all();
@@ -170,6 +172,7 @@ void Vibrator::finishCallback(uint64_t seq, const std::shared_ptr<IVibratorCallb
         if (mShutdown || mSeq != seq) {
             return;
         }
+        mActive = false;
         globalCb = mGlobalCallback;
         mGlobalCallback = nullptr;
     }
@@ -253,8 +256,15 @@ ndk::ScopedAStatus Vibrator::getCapabilities(int32_t* _aidl_return) {
 }
 
 ndk::ScopedAStatus Vibrator::off() {
-    std::lock_guard lock(mMutex);
-    stopActiveLocked();
+    std::shared_ptr<IVibratorCallback> globalCb;
+    {
+        std::lock_guard lock(mMutex);
+        stopActiveLocked();
+        globalCb = std::move(mGlobalCallback);
+    }
+    if (globalCb) {
+        globalCb->onComplete();
+    }
     return ndk::ScopedAStatus::ok();
 }
 
@@ -336,14 +346,26 @@ ndk::ScopedAStatus Vibrator::perform(Effect effect, EffectStrength strength,
 
     if (isDoubleClick) {
         scheduleAsyncLocked(seq, [this, effectId, amp, callback](uint64_t mySeq) {
-            if (mRichTap.ready) {
-                mRichTap.performId(effectId, amp);
+            {
+                std::lock_guard lock(mMutex);
+                if (mShutdown || mSeq != mySeq) {
+                    return;
+                }
+                if (mRichTap.ready) {
+                    mRichTap.performId(effectId, amp);
+                }
             }
             if (!waitCancellable(mySeq, 100)) {
                 return;
             }
-            if (mRichTap.ready) {
-                mRichTap.performId(effectId, amp);
+            {
+                std::lock_guard lock(mMutex);
+                if (mShutdown || mSeq != mySeq) {
+                    return;
+                }
+                if (mRichTap.ready) {
+                    mRichTap.performId(effectId, amp);
+                }
             }
             if (waitCancellable(mySeq, 40)) {
                 finishCallback(mySeq, callback);
@@ -463,16 +485,22 @@ ndk::ScopedAStatus Vibrator::compose(const std::vector<CompositeEffect>& composi
             }
             int32_t dur = 0;
             uint32_t id = primitiveToEffectId(item.primitive, &dur);
-            if (mRichTap.ready) {
-                if (id == 0) {
-                    uint8_t amp = static_cast<uint8_t>(
-                            std::clamp<int>(std::lround(item.scale * 255.0f), 1, 255));
-                    mRichTap.setAmplitude(amp);
-                    mRichTap.on(static_cast<uint32_t>(dur));
-                } else {
-                    int32_t strength = std::clamp<int32_t>(
-                            static_cast<int32_t>(std::lround(item.scale * 100.0f)), 1, 100);
-                    mRichTap.performId(id, strength);
+            {
+                std::lock_guard lock(mMutex);
+                if (mShutdown || mSeq != mySeq) {
+                    return;
+                }
+                if (mRichTap.ready) {
+                    if (id == 0) {
+                        uint8_t amp = static_cast<uint8_t>(
+                                std::clamp<int>(std::lround(item.scale * 255.0f), 1, 255));
+                        mRichTap.setAmplitude(amp);
+                        mRichTap.on(static_cast<uint32_t>(dur));
+                    } else {
+                        int32_t strength = std::clamp<int32_t>(
+                                static_cast<int32_t>(std::lround(item.scale * 100.0f)), 1, 100);
+                        mRichTap.performId(id, strength);
+                    }
                 }
             }
             if (!waitCancellable(mySeq, dur)) {
@@ -558,9 +586,13 @@ ndk::ScopedAStatus Vibrator::composePwleV2(const CompositePwleV2&,
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-void Vibrator::setGlobalVibrationCallback(const std::shared_ptr<IVibratorCallback>& callback) {
+bool Vibrator::setGlobalVibrationCallback(const std::shared_ptr<IVibratorCallback>& callback) {
     std::lock_guard lock(mMutex);
+    if (!mActive) {
+        return false;
+    }
     mGlobalCallback = callback;
+    return true;
 }
 
 }  // namespace vibrator

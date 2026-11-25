@@ -27,10 +27,17 @@ class VibratorCallback : public BnVibratorCallback {
                      std::shared_ptr<VibratorManager> manager)
         : mDelayMs(delayMs), mSession(std::move(session)), mManager(std::move(manager)) {}
     ndk::ScopedAStatus onComplete() override {
-        usleep(mDelayMs * 1000);
-        if (mManager) {
-            mManager->clearSession(mSession);
-        }
+        auto manager = mManager;
+        auto session = mSession;
+        int32_t delayMs = mDelayMs;
+        std::thread([delayMs, session = std::move(session), manager = std::move(manager)]() {
+            if (delayMs > 0) {
+                usleep(static_cast<useconds_t>(delayMs) * 1000);
+            }
+            if (manager) {
+                manager->clearSession(session);
+            }
+        }).detach();
         return ndk::ScopedAStatus::ok();
     }
 
@@ -47,15 +54,10 @@ ndk::ScopedAStatus VibratorManager::getCapabilities(int32_t* _aidl_return) {
         if (!getInterfaceVersion(&version).isOk()) {
             return ndk::ScopedAStatus(AStatus_fromExceptionCode(EX_ILLEGAL_STATE));
         }
-        mCapabilities = IVibratorManager::CAP_SYNC | IVibratorManager::CAP_PREPARE_ON |
-                        IVibratorManager::CAP_PREPARE_PERFORM |
-                        IVibratorManager::CAP_PREPARE_COMPOSE |
-                        IVibratorManager::CAP_MIXED_TRIGGER_ON |
-                        IVibratorManager::CAP_MIXED_TRIGGER_PERFORM |
-                        IVibratorManager::CAP_MIXED_TRIGGER_COMPOSE |
-                        IVibratorManager::CAP_TRIGGER_CALLBACK;
+        // Single-vibrator device: only advertise sessions (do not advertise CAP_SYNC
+        // without deferred prepare/trigger support).
         if (version >= 3) {
-            mCapabilities |= IVibratorManager::CAP_START_SESSIONS;
+            mCapabilities = IVibratorManager::CAP_START_SESSIONS;
         }
     }
     *_aidl_return = mCapabilities;
@@ -77,37 +79,16 @@ ndk::ScopedAStatus VibratorManager::getVibrator(int32_t vibratorId,
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
 }
 
-ndk::ScopedAStatus VibratorManager::prepareSynced(const std::vector<int32_t>& vibratorIds) {
-    if (vibratorIds.size() != 1 || vibratorIds[0] != kDefaultVibratorId) {
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
-    }
-    std::lock_guard lock(mMutex);
-    if (mIsPreparing) {
-        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-    }
-    mIsPreparing = true;
-    return ndk::ScopedAStatus::ok();
+ndk::ScopedAStatus VibratorManager::prepareSynced(const std::vector<int32_t>&) {
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
-ndk::ScopedAStatus VibratorManager::triggerSynced(
-        const std::shared_ptr<IVibratorCallback>& callback) {
-    {
-        std::lock_guard lock(mMutex);
-        if (!mIsPreparing) {
-            return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
-        }
-        mIsPreparing = false;
-    }
-    if (callback) {
-        std::thread([callback] { callback->onComplete(); }).detach();
-    }
-    return ndk::ScopedAStatus::ok();
+ndk::ScopedAStatus VibratorManager::triggerSynced(const std::shared_ptr<IVibratorCallback>&) {
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
 ndk::ScopedAStatus VibratorManager::cancelSynced() {
-    std::lock_guard lock(mMutex);
-    mIsPreparing = false;
-    return ndk::ScopedAStatus::ok();
+    return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 
 ndk::ScopedAStatus VibratorManager::startSession(const std::vector<int32_t>& vibratorIds,
@@ -126,7 +107,7 @@ ndk::ScopedAStatus VibratorManager::startSession(const std::vector<int32_t>& vib
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
     std::lock_guard lock(mMutex);
-    if (mIsPreparing || mSession) {
+    if (mSession) {
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
     }
     mSessionCallback = callback;
@@ -165,9 +146,17 @@ void VibratorManager::closeSession(int32_t delayMs) {
         session = mSession;
     }
     if (session) {
-        auto callback = ndk::SharedRefBase::make<VibratorCallback>(delayMs, session,
-                                                                   this->ref<VibratorManager>());
-        mDefaultVibrator->setGlobalVibrationCallback(callback);
+        auto self = this->ref<VibratorManager>();
+        auto callback = ndk::SharedRefBase::make<VibratorCallback>(delayMs, session, self);
+        if (!mDefaultVibrator->setGlobalVibrationCallback(callback)) {
+            // No active vibration in flight — close after delayMs without blocking.
+            std::thread([delayMs, session = std::move(session), self = std::move(self)]() {
+                if (delayMs > 0) {
+                    usleep(static_cast<useconds_t>(delayMs) * 1000);
+                }
+                self->clearSession(session);
+            }).detach();
+        }
     }
 }
 

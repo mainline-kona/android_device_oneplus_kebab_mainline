@@ -45,7 +45,6 @@ class VibratorManager : public BnVibratorManager {
     std::shared_ptr<Vibrator> mDefaultVibrator;
     mutable std::mutex mMutex;
     int32_t mCapabilities GUARDED_BY(mMutex) = 0;
-    bool mIsPreparing GUARDED_BY(mMutex) = false;
     std::shared_ptr<IVibrationSession> mSession GUARDED_BY(mMutex) = nullptr;
     std::shared_ptr<IVibratorCallback> mSessionCallback GUARDED_BY(mMutex) = nullptr;
 };
