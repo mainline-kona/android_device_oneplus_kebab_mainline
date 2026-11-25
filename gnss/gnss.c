@@ -110,6 +110,17 @@ static gboolean on_sigterm(gpointer loop) {
     return G_SOURCE_REMOVE;
 }
 
+static QrtrNode *find_loc_node(QrtrBus *bus) {
+    GList *nodes = qrtr_bus_peek_nodes(bus);
+    for (GList *l = nodes; l != NULL; l = l->next) {
+        QrtrNode *n = QRTR_NODE(l->data);
+        if (qrtr_node_lookup_port(n, QMI_SERVICE_LOC) >= 0) {
+            return g_object_ref(n);
+        }
+    }
+    return NULL;
+}
+
 int main(void) {
     GError *error = NULL;
     Wait w = {.loop = g_main_loop_new(NULL, FALSE)};
@@ -117,8 +128,16 @@ int main(void) {
     qrtr_bus_new(1000, NULL, on_done, &w);
     g_autoptr(QrtrBus) bus = qrtr_bus_new_finish(wait_result(&w), &error);
     if (!bus) fail("qrtr bus", error);
-    qrtr_bus_wait_for_node(bus, 0, 30000, NULL, on_done, &w);
-    g_autoptr(QrtrNode) node = qrtr_bus_wait_for_node_finish(bus, wait_result(&w), &error);
+    /*
+     * On OnePlus 8T (SM8250 + external SDX55 over MHI), the modem exposes
+     * QMI LOC (service 16) on QRTR node 3 rather than node 0. Prefer any
+     * node already advertising QMI_SERVICE_LOC, then fall back to node 3.
+     */
+    g_autoptr(QrtrNode) node = find_loc_node(bus);
+    if (!node) {
+        qrtr_bus_wait_for_node(bus, 3, 30000, NULL, on_done, &w);
+        node = qrtr_bus_wait_for_node_finish(bus, wait_result(&w), &error);
+    }
     if (!node) fail("find modem node", error);
     qmi_device_new_from_node(node, NULL, on_done, &w);
     g_autoptr(QmiDevice) dev = qmi_device_new_from_node_finish(wait_result(&w), &error);
