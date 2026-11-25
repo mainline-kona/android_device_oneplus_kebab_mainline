@@ -13,6 +13,7 @@
 /vendor/bin/hw/android\.hardware\.nfc2-service\.nxp		u:object_r:hal_nfc_default_exec:s0
 /vendor/bin/hw/android\.hardware\.thermal-service\.kona		u:object_r:hal_thermal_default_exec:s0
 /vendor/bin/hw/android\.hardware\.usb-service\.basic		u:object_r:hal_usb_default_exec:s0
+/vendor/bin/hw/android\.hardware\.vibrator-service\.kebab	u:object_r:hal_vibrator_default_exec:s0
 
 # Vendor binaries
 /vendor/bin/bringup-log\.sh					u:object_r:vendor_shell_exec:s0
@@ -30,6 +31,9 @@
 
 # Goodix optical UDFPS sensor
 /dev/goodix_fp		u:object_r:vendor_goodix_fp_device:s0
+
+# AW8697 AAC RichTap X-axis LRA haptics
+/dev/awinic_haptic	u:object_r:vendor_haptic_device:s0
 
 # Telephony (external SDX55 over MHI)
 /vendor/bin/hw/libcuttlefish-rild	u:object_r:rild_exec:s0

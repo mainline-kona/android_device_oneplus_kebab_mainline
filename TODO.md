@@ -21,11 +21,10 @@ Local fixes ready in `device/oneplus/kebab_mainline`:
 
 ## 2. Feature Ports from `oplus-kona/android_hardware_oplus` & Downstream Kernel
 
-- [ ] **RichTap X-Axis LRA Haptics (Replace generic `input-ff` rumble)**:
-  - Port downstream `drivers/misc/aw8697_haptic` (`aw8697.c`, `/dev/awinic_haptic`, `/sys/class/leds/vibrator/*`) to Linux 6.18 on `haptics@5a` (`sm8250-oneplus-common.dtsi`), replacing `aw8695-haptics.c`.
-  - Port `aidl/vibrator/richtap` from `oplus-kona/android_hardware_oplus`.
-  - Pull `libaacvibrator.so` and `aw8697_*_RTP_*.bin` waveforms from `stock-vendor/sm8250-common`.
-  - Add ueventd + SELinux rules for `/dev/awinic_haptic` and `/sys/class/leds/vibrator/*`.
+- [x] **RichTap X-Axis LRA Haptics (Replace generic `input-ff` rumble)** *(wired & compile-verified; ready for `m bootimage vendorimage` live test)*:
+  - Extended mainline Linux 6.18 `drivers/input/misc/aw8695-haptics.c` (`1734a29f39c9`) with AW8697 `/dev/awinic_haptic` AAC RichTap ioctls (`GET_HWINFO=5`, `GET_F0`, `SETTING_GAIN`, `RTP_MODE`, `STREAM_MODE`, `STOP_MODE`) + 16×1000-byte mmap ring buffer + high-priority RTP FIFO streamer + explicit 2 KB SRAM FIFO AE/AF thresholds.
+  - Added Android 17 AIDL V4 `IVibrator` + `IVibratorManager` RichTap HAL (`vibrator/`, `android.hardware.vibrator-service.kebab`, `TARGET_VIBRATOR_HAL := richtap`) calling `libaacvibrator.so` + `/vendor/etc/aac_richtap.config`.
+  - Added stock `libaacvibrator.so` + `aac_richtap.config` to `kebab_mainline-firmware/richtap/` (`c16a48a`), plus `vendor.prop`, `ueventd.kebab.rc`, and SELinux (`vendor_haptic_device`, `vendor_richtap_prop`, `hal_vibrator_default.te`).
 - [ ] **Alert Slider (3-Position Tri-State Key)**:
   - Port downstream Hall-sensor driver (`tri_state_key` / `/proc/tristatekey/tri_state` + input key events) to `mainline-kona` + DTS node in `sm8250-oneplus-kebab.dts`.
   - Port `packages/KeyHandler` from `oplus-kona/android_hardware_oplus` (`KebabMainlineKeyHandlerResTarget` and `config_deviceKeyHandlerLibs` are already configured).

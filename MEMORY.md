@@ -10,7 +10,7 @@
 - **ROM**: LineageOS 24.0 (Android 17) at `/serverhive5/zenzer0s/los`
 - **Device Tree**: `/serverhive5/zenzer0s/los/device/oneplus/kebab_mainline` (branch `main`)
 - **RIL Repo**: `/serverhive5/zenzer0s/los/hardware/mainline/kona-ril` (branch `empty`, HEAD `d2a8c05`)
-- **Kernel**: `/serverhive5/zenzer0s/mainline-kona` (branch `android17-6.18-lts-8t`, ACK `android17-6.18-lts`, HEAD `3a5bd1dd5b94`)
+- **Kernel**: `/serverhive5/zenzer0s/mainline-kona` (branch `android17-6.18-lts-8t`, ACK `android17-6.18-lts`, HEAD `1734a29f39c9`)
 - **Reference Trees**:
   - Stock kebab kernel/DTS: `/serverhive5/zenzer0s/ref-stock-kebab`
   - Mainline reference: `/serverhive5/zenzer0s/mainline-kona-ref`
@@ -67,12 +67,16 @@ Only **FOUR** `vendor.img` commits are pending flash (VoLTE/VoNR + real Baseband
    - `AT+CRSM=192,<fileid>,0,0,15` truncated 29-byte USIM FCPs before the `0x80` file-size TLV, and `convertUsimToSim()` fell back to `sizeIndex=0` (`0x8202` = `33282`), truncating `EF_SPN` (`"Jio"` -> `"J"`), `EF_PNN`, `EF_AD`, `EF_UST`, etc. Fixed `requestSIM_IO()` to request full FCP (`AT+CRSM=192,<fileid>` with `p3=0` & exact-length retries) and hardened `convertUsimToSim()` with proper TLV walking and bounds checks. Compile-verified cleanly.
 4. **`hardware/mainline/kona-ril` (`d2a8c05`) — Query real IMEI, IMEI SV (`17`), and MEID via QMI DMS**:
    - `requestDeviceIdentity()` previously hardcoded IMEI SV to `""` (empty) and ESN to fake `"77777777"`. Wired `QMI_DMS_GET_DEVICE_SERIAL_NUMBERS (0x0025)` (TLV `0x11` IMEI, `0x13` IMEI SV `17`, `0x12` MEID, with `AT+CGSN` fallback). Compile-verified cleanly.
+5. **AAC RichTap X-Axis LRA Haptics (Kernel `1734a29f39c9` + Firmware `c16a48a` + Device Tree `vibrator/`)**:
+   - **Kernel (`mainline-kona` `1734a29f39c9`)**: Extended `drivers/input/misc/aw8695-haptics.c` with `/dev/awinic_haptic` RichTap ioctls + 16×1000-byte mmap ring buffer + high-priority AW8697 RTP FIFO streamer + calibrated `f0` reporting (`RICHTAP_GET_F0`) + 2 KB SRAM FIFO AE/AF config. Compile-verified cleanly against Linux 6.18.
+   - **Firmware (`kebab_mainline-firmware` `c16a48a`)**: Added `richtap/lib64/libaacvibrator.so` & `richtap/etc/aac_richtap.config`.
+   - **HAL (`device/oneplus/kebab_mainline/vibrator/`)**: Added Android 17 AIDL V4 `IVibrator` + `IVibratorManager` service (`android.hardware.vibrator-service.kebab`, `TARGET_VIBRATOR_HAL := richtap`) calling `libaacvibrator.so` (`aac_vibra_init`, `on`, `stop`, `setAmplitude`, `perform_id` prebaked effects `0x3007`..`0x300b`, `compose` primitives, real `f0`), wired `vendor.prop`, `ueventd.kebab.rc`, and SELinux (`vendor_haptic_device`, `vendor_richtap_prop`, `hal_vibrator_default.te`). All 4 `.cpp` files compile-verified cleanly against `android.hardware.vibrator-V4-ndk`.
 
-**Next Build Command for User (vendor only!)**:
+**Next Build Command for User (`boot.img` + `vendor.img`)**:
 ```bash
-m vendorimage
+m bootimage vendorimage
 ```
-(then flash `vendor.img`).
+(then flash `boot.img` and `vendor.img`).
 
 ---
 

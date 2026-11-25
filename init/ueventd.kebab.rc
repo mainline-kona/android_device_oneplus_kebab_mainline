@@ -27,3 +27,6 @@ firmware_directories /lib/firmware/ /system/etc/firmware/ /vendor/firmware/ /odm
 
 # Goodix optical UDFPS sensor
 /dev/goodix_fp            0660   system     system
+
+# AW8697 AAC RichTap X-axis LRA haptics
+/dev/awinic_haptic        0660   system     system

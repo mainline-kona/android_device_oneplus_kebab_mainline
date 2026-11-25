@@ -11,6 +11,10 @@ FIRMWARE_PATH ?= device/oneplus/kebab_mainline-firmware
 # optional sensors-hal_mainline module.
 TARGET_SENSORS_HAL := mainline
 
+# Vibrator: AAC RichTap X-axis LRA AIDL V4 HAL over AW8697 /dev/awinic_haptic
+# (replaces optional vibrator-hal_mainline APEX).
+TARGET_VIBRATOR_HAL := richtap
+
 TARGET_BOARD_PLATFORM := qcom
 TARGET_QCOM_SOC := sm8250
 TARGET_GRAPHICS := mesa
@@ -163,6 +167,14 @@ PRODUCT_COPY_FILES += \
     $(FIRMWARE_PATH)/qtee/lib64/libqtikeymaster4.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libqtikeymaster4.so \
     $(FIRMWARE_PATH)/qtee/lib64/libqcbor.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libqcbor.so \
     $(FIRMWARE_PATH)/qtee/lib64/libspcom.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libspcom.so
+
+# Vibrator: AAC RichTap X-axis LRA AIDL V4 HAL (AW8697 /dev/awinic_haptic)
+PRODUCT_PACKAGES += \
+    android.hardware.vibrator-service.kebab
+
+PRODUCT_COPY_FILES += \
+    $(FIRMWARE_PATH)/richtap/lib64/libaacvibrator.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libaacvibrator.so \
+    $(FIRMWARE_PATH)/richtap/etc/aac_richtap.config:$(TARGET_COPY_OUT_VENDOR)/etc/aac_richtap.config
 
 # Fingerprint: Goodix optical UDFPS AIDL HAL (G6_3 gfp9638 & G6_7 gfp9678) over QTEE
 PRODUCT_PACKAGES += \
