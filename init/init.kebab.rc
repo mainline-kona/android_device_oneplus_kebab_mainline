@@ -27,15 +27,14 @@ on fs
 
 on late-fs
     mount_all --late
-    # The X55 probes TFTP at ~25 s, but qcom-common only creates these in the
-    # "boot" action (~35 s). tqftpserv maps /readwrite/ to this directory and
-    # mkdir()s only the leaf, so on freshly formatted /data every probe was
-    # rejected and the modem came up offline with zero bands. late-fs runs
-    # immediately after /data is mounted, before the modem asks.
-    mkdir /data/vendor 0771 root root
+
+on post-fs-data
+    # The X55 probes TFTP at ~11 s, before qcom-common's "boot" action runs.
+    # Create /data/vendor/tmp/tqftpserv here (after installkey /data has set up
+    # FBE in post-fs-data) so tqftpserv can serve /readwrite/ on first boot.
     mkdir /data/vendor/tmp 0755 root root
     mkdir /data/vendor/tmp/tqftpserv 0755 root root
-    restorecon_recursive /data/vendor
+    restorecon_recursive /data/vendor/tmp
 
 on post-fs
     mkdir /mnt/vendor/persist/klog 0775 root system
