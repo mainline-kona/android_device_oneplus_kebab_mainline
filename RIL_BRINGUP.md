@@ -160,7 +160,7 @@ Captured directly from live hardware (`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1.547
 
 ### Phase 6 — Polish: Legacy CS Voice (`q6voice`), Dual-SIM (`slot2` DSDS), EFS & SELinux
 - [ ] **Legacy 2G/3G CS Voice** (for non-VoLTE fallback / CSFB carriers): port `q6voice` driver + `sm8250-oneplus-common.dtsi` VoiceMMode1 DAI links + `q6voice-*.bin` + `audio/ucm2` VoiceCall routing + `kona-voicecall`.
-- [ ] **Dual-SIM (DSDS)**: expose `slot2` AIDL instances when `ro.boot.opt_sim_count=2` (if second physical SIM needed).
+- [x] **Dual-SIM (DSDS)** (`66b6135` + `vendor.prop`): enabled `SIM_COUNT=2` / `ANDROID_MULTI_SIM` + `slot2` VINTF instances + `persist.radio.multisim.config=dsds`, real QMI DMS dual IMEI/IMEI SV (`0x0054` + `0x0025`), QMI UIM dual-slot status (`0x0047`), and AT-free `onRequestSlot2()` (compile-verified; pending `m vendorimage` live test).
 - [ ] **EFS Writeback & Cleanup**: evaluate `sahara_mdm.efs_writeback=1` once modem stability is proven; clean up `bringup-log.sh` `kebab-dataconn --diag-msgs` reference; verify zero `rild`/`ims` AVCs for SELinux Enforcing.
 
 ---

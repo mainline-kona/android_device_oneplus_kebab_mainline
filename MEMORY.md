@@ -62,11 +62,16 @@
 
 ## 3. Committed Locally & Ready to Build/Flash Next (NOT Yet Flashed)
 
-Only **ONE** `vendor.img` commit is pending flash (`8d962cc` in `hardware/mainline/kona-ril`):
+Two `vendor.img`-only changes are pending flash (`8d962cc` + `66b6135` in `hardware/mainline/kona-ril`, plus `vendor.prop` in `device/oneplus/kebab_mainline`):
 
 1. **`hardware/mainline/kona-ril` (`8d962cc`) — Fix real IMEI/IMEI SV (`17`) & full Baseband version**:
    - Removed Cuttlefish's hardcoded fake `RefRadioModem::getImei()` override (`"867400022047199"` / `"01"`), so `RadioModem::getImei()` delegates directly to our real QMI DMS `requestDeviceIdentity()` (real SDX55 IMEI + IMEI SV **`17`**).
    - Fixed `qmiDmsGetBasebandVersion()` to trim trailing `.build` suffix after `PACK-<n>` when `> 45` chars so Android `GsmCdmaPhone` (`PROP_VALUE_MAX / 2 = 45`) stops front-truncating `"MPSS.HI.2"` — now displays full **`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1`**.
+2. **`hardware/mainline/kona-ril` (`66b6135`) + `device/oneplus/kebab_mainline` (`vendor.prop`) — Enable DSDS (`slot1` + `slot2`) with real dual IMEI/SV & dual UIM slot status**:
+   - Enabled `-DSIM_COUNT=2 -DANDROID_MULTI_SIM` across `libcuttlefish-rild`, `libril-modem-lib`, and `libcuttlefish-ril-2`; declared `slot2` VINTF instances for all 8 per-slot radio HALs in `radio-kona.xml` and set `persist.radio.multisim.config=dsds` in `vendor.prop`.
+   - Fixed 4 upstream Cuttlefish `SIM_COUNT >= 2` bugs in `ril_service.cpp` (`osAppIdVec` undeclared, duplicate `IImsMedia/default` registration in loop, duplicate `compat::RadioModem`/`compat::RadioSim` publication, off-by-one `getRadioServiceRwlock(slotId)`).
+   - Implemented `qmiDmsGetSerialNumbersForSlot()` (`QMI_DMS_BIND_SUBSCRIPTION 0x0054` primary=1 / secondary=2 + `QMI_DMS_GET_DEVICE_SERIAL_NUMBERS 0x0025` over a single QRTR socket → real IMEI 1 + IMEI 2 + IMEI SV `17`), `qmiUimGetSlotsStatus()` (`QMI_UIM_GET_SLOTS_STATUS 0x0047` TLV `0x10` for both physical slots), and an AT-free `onRequestSlot2()` handler so slot 1 5G/LTE/IMS stays completely isolated.
+   - Compile-verified all 11 `kona-ril` translation units cleanly with `-DSIM_COUNT=2 -DANDROID_MULTI_SIM`.
 
 **Next Build Command for User (`vendor.img` only!)**:
 ```bash
