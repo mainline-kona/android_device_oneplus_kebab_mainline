@@ -94,12 +94,10 @@ service vendor.kebab_pdready /vendor/bin/kebab-pdready.sh
     oneshot
     disabled
 
-# DSPs start only after pd-mapper has published the protection-domain maps;
-# immediately restart hexagonrpcd so it attaches without waiting on init's 5s backoff.
+# DSPs start only after pd-mapper has published the protection-domain maps.
+# hexagonrpcd waits in-process for /dev/fastrpc-* so it attaches within 50ms of DSP boot.
 on property:sys.kebab.pdready=1
     trigger start_all_remoteproc
-    restart vendor.hexagonrpcd-sdsp
-    restart vendor.hexagonrpcd-adsp-rootpd
 
 on property:init.svc.vendor.tqftpserv=running
     stop vendor.tqftpserv
