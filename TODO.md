@@ -4,21 +4,18 @@ Target: LineageOS 24.0 (Android 17) on ACK `android17-6.18-lts` (`mainline-kona`
 
 ---
 
-## 1. Ready to Build, Flash & Verify Now (`m bootimage vendorimage`)
+## 1. Ready to Build, Flash & Verify Next (`m vendorimage odmimage`)
 
-Local commits ready across `mainline-kona`, `device/oneplus/kebab_mainline`, and `hardware/mainline/qcom`:
+Local fixes ready in `device/oneplus/kebab_mainline`:
 
-- [ ] **Rebuild & flash** `boot.img` and `vendor.img` (`m bootimage vendorimage`).
-- [ ] **Verify fast boot (~18–22 s vs ~79 s)** (`8068c3a`):
-  - Confirm `qrtr-cfg 1`, `hexagonrpcd-{sdsp,adsp-rootpd}`, and `start_remoteproc.sh` bring SLPI up in `post-fs` (~4.8 s) before `vendor.sensors-mainline` starts (~7.3 s).
-  - Confirm `ISensors/default` registers in ~200 ms with all 6 SLPI sensors and no 62 s `ams_ready` stall.
-- [ ] **Verify Goodix optical UDFPS enrollment & unlock** (`722fbc69aa3e`, `6e61e44b2b4f`, `d049c8c`, `28c3aca`):
-  - Confirm `/proc/touchpanel/fp_enable` exists and `goodix::Device::enable_tp(1)` succeeds.
-  - Confirm `HBM=1 (25 ms) -> TOUCHDOWN -> notify_fppress=1 (GF_NET_EVENT_UI_READY)` triggers clean optical capture with no `GF_ERROR_UI_READY_TIMEOUT`.
-  - Test full enrollment in Settings, lockscreen unlock, and biometric prompt.
-- [ ] **Verify SDX55 modem RF & GPS** (`328719f`, `03ee542`):
-  - Confirm `tqftpserv` serves `/vendor/firmware_mnt/image/modem_pr/mcfg/...` cleanly (no truncated `/vendor/firmware_mnt/imag` `ENOENT`).
-  - Confirm SDX55 boots out of `DMS_OP_MODE: offline` and `kona-gnss` gets `ENGINE_STATE: ON`, live SV/GSV satellites (GPS/GLONASS/Galileo/BeiDou/QZSS), and a real GPS fix.
+- [ ] **Rebuild & flash** `vendor.img` and `odm.img` (`m vendorimage odmimage` — `odm.img` updates `/odm/etc/selinux/precompiled_sepolicy`).
+- [ ] **Verify fast cold boot (~16–20 s vs ~72 s)**:
+  - Fixed root cause of the 65 s SLPI stall: 292 files in `/mnt/vendor/persist/sensors/registry/registry/` (including `bmi26x_0*`) were `root:root 0660`, causing `EACCES` for `hexagonrpcd-sdsp` (`system:system`). Live test dropped SLPI init from **65.8 s -> ~5.5 s**.
+  - Added `chown -R system:system /mnt/vendor/persist/sensors` to `kebab-pdready.sh` before SLPI boot + write/rename SELinux perms in `vendor_hexagonrpcd.te`.
+- [ ] **Verify GPS cold-start fix outdoors / near window**:
+  - `tqftpserv` (`328719f`) is verified working live (SDX55 loads `657_0_0.mbn`, `mbn_hw.dig`, `mbn_sw.dig` cleanly).
+  - Added automatic `QMI_DMS_SET_OPERATING_MODE(ONLINE)` in `gnss/gnss.c` so GNSS switches `ENGINE_STATE: ON` automatically on boot without a running RIL.
+  - Test live satellite lock & position fix in GPSTest / Maps near a window or outdoors.
 
 ---
 
@@ -73,5 +70,6 @@ Local commits ready across `mainline-kona`, `device/oneplus/kebab_mainline`, and
 - NFC (`android.hardware.nfc2-service.nxp`).
 - All 6 SLPI hardware sensors via `libssc` (`bmi26x` accel/gyro, `mmc5603x` mag, `stk33502` light/prox, Rotation Vector).
 - Hardware-backed Keymaster 4.1 + Gatekeeper 1.0 + UFS RPMB + Lockscreen PIN/Pattern (`qcomtee` + `qseecomd`).
-- Goodix `gfp9638` TA load, QTEE DMA32/CMA `< 4 GiB` SHM, unlocked calibration (`vendor.fingerprint.cali=1`), AIDL `IFingerprint/default`.
+- Goodix optical UDFPS (`gfp9638`): TA load, QTEE DMA32/CMA `< 4 GiB` SHM, `/proc/touchpanel/fp_enable`, `HBM -> TOUCHDOWN -> UI_READY` sequencing, **full enrollment & unlock verified live** (`auth_total_time=498 ms`, `ui_ready_time=0 ms`, `capture_time=132 ms`).
+- SDX55 `tqftpserv` MCFG serving (`657_0_0.mbn`, `mbn_hw.dig`, `mbn_sw.dig`) & GNSS `ENGINE_STATE: ON` + `SV_INFO` + NMEA streaming verified live.
 - Idle CPU & thermals fixed (~86–93% idle, ~50–54 °C after removing legacy HIDL `config_biometric_sensors`).
