@@ -31,6 +31,8 @@ on late-fs
     mount_all --late
 
 on post-fs-data
+    # GP secure storage directory for qseecomd's libdrmfs listener
+    mkdir /data/vendor/tzstorage 0770 system system
     # The X55 probes TFTP at ~11 s, before qcom-common's "boot" action runs.
     # Create /data/vendor/tmp/tqftpserv here (after installkey /data has set up
     # FBE in post-fs-data) so tqftpserv can serve /readwrite/ on first boot.
