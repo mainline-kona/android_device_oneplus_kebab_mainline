@@ -16,10 +16,10 @@ debug.hwui.renderer=skiagl
 # Light
 vendor.light.backlight.disable=false
 
-# Sensors: skip libssc and don't block 30s waiting for 1 hardware sensor until SLPI sensors work
-vendor.sensors.backends=iio
+# Sensors: libssc over SLPI (keep wait_for_sensors=0 for fast ~15s boot)
+vendor.sensors.backends=libssc,iio
 vendor.sensors.wait_for_sensors=0
-vendor.sensors.ssc.discovery_wait_ms=2000
+vendor.sensors.ssc.discovery_wait_ms=5000
 
 # Bluetooth
 bluetooth.device.default_name=OnePlus 8T
