@@ -141,6 +141,8 @@ PRODUCT_COPY_FILES += \
     $(FIRMWARE_PATH)/qca/htnv20.bin:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/qca/htnv20.bin \
     $(FIRMWARE_PATH)/qca/htbtfw20.tlv:$(TARGET_COPY_OUT_VENDOR)/firmware/qca/htbtfw20.tlv \
     $(FIRMWARE_PATH)/qca/htnv20.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/qca/htnv20.bin \
+    $(FIRMWARE_PATH)/qca/htbtfw20.tlv:$(TARGET_COPY_OUT_RAMDISK)/lib/firmware/qca/htbtfw20.tlv \
+    $(FIRMWARE_PATH)/qca/htnv20.bin:$(TARGET_COPY_OUT_RAMDISK)/lib/firmware/qca/htnv20.bin \
     $(FIRMWARE_PATH)/qcom/a650_sqe.fw:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/qcom/a650_sqe.fw \
     $(FIRMWARE_PATH)/qcom/a650_gmu.bin:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/qcom/a650_gmu.bin \
     $(FIRMWARE_PATH)/qcom/a650_sqe.fw:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/qcom/a650_sqe.fw \
