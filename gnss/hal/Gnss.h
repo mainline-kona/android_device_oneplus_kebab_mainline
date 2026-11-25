@@ -32,7 +32,10 @@
 #include <sys/types.h>
 #include <atomic>
 #include <mutex>
+#include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 #include "GnssConfiguration.h"
 #include "GnssMeasurementInterface.h"
 #include "GnssPowerIndication.h"
@@ -106,6 +109,9 @@ class Gnss : public BnGnss {
     void stopHelper();
     void readHelper();
     void handleSentence(const std::string& line);
+    void handlePosition(const std::string& line);
+    void flushSvStatus();
+    static void runHelperOneShot(std::vector<std::string> args);
     std::vector<IGnssCallback::GnssSvInfo> filterBlocklistedSatellites(
             std::vector<IGnssCallback::GnssSvInfo> gnssSvInfoList) const;
 
@@ -127,9 +133,9 @@ class Gnss : public BnGnss {
     std::mutex mHelperMutex;
     pid_t mHelperPid = -1;
     int mHelperFd = -1;
-    std::string mGga;
+    std::string mPending;
     std::vector<IGnssCallback::GnssSvInfo> mSvs;
-    std::vector<int> mUsedSvids;
+    std::vector<std::pair<GnssConstellationType, int>> mUsedSvs;
 
     mutable std::mutex mMutex;
 };

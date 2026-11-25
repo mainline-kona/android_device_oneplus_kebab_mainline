@@ -17,6 +17,8 @@
 #pragma once
 
 #include <aidl/android/hardware/gnss/BnGnssPsds.h>
+#include <cstdint>
+#include <mutex>
 
 namespace aidl::android::hardware::gnss {
 
@@ -26,12 +28,15 @@ struct GnssPsds : public BnGnssPsds {
     ndk::ScopedAStatus injectPsdsData(PsdsType psdsType,
                                       const std::vector<uint8_t>& psdsData) override;
 
-  private:
-    // Guarded by mMutex
-    static std::shared_ptr<IGnssPsdsCallback> sCallback;
+    static void requestPsds(PsdsType psdsType);
+    static void resetInjectionState();
 
-    // Synchronization lock for sCallback
-    mutable std::mutex mMutex;
+  private:
+    // Guarded by sMutex
+    static std::shared_ptr<IGnssPsdsCallback> sCallback;
+    static int64_t sLastInjectedNs;
+    static int64_t sLastRequestNs;
+    static std::mutex sMutex;
 };
 
 }  // namespace aidl::android::hardware::gnss

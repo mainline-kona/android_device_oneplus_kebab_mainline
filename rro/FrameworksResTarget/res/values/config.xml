@@ -72,4 +72,12 @@
         <item>org.lineageos.settings.device.KeyHandler</item>
     </string-array>
 
+    <!-- Qualcomm XTRA3 Long-Term PSDS servers for SDX55 modem GNSS assistance -->
+    <string-array name="config_gnssParameters" translatable="false">
+        <item>LONGTERM_PSDS_SERVER_1=https://path1.xtracloud.net/xtra3Mgrbeji.bin</item>
+        <item>LONGTERM_PSDS_SERVER_2=https://path2.xtracloud.net/xtra3Mgrbeji.bin</item>
+        <item>LONGTERM_PSDS_SERVER_3=https://path3.xtracloud.net/xtra3Mgrbeji.bin</item>
+        <item>ENABLE_PSDS_PERIODIC_DOWNLOAD=true</item>
+    </string-array>
+
 </resources>
