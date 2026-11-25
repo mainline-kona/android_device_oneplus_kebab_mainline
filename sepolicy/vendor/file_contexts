@@ -24,6 +24,7 @@
 
 # QSEE apps outside QTEE's object interface
 /dev/qseecom_bridge	u:object_r:tee_device:s0
+/dev/sg[0-9]+		u:object_r:vendor_sg_device:s0
 
 # Goodix optical UDFPS sensor
 /dev/goodix_fp		u:object_r:vendor_goodix_fp_device:s0

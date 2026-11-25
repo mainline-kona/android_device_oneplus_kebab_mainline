@@ -27,8 +27,11 @@ TARGET_MEDIA_C2_HAL := v4l2_codec2
 TARGET_V4L2_CODEC2_USE_EXAMPLE_CONFIGURATION := false
 
 # Hardware-backed security: stock Qualcomm Keymaster 4.1 + Gatekeeper 1.0 + qseecomd
-# over our open-source external/qcomtee (libQSEEComAPI) + kernel qcom_qseecom_bridge
+# over our open-source external/qcomtee (libQSEEComAPI) + kernel qcom_qseecom_bridge.
+# Keymaster 4.1 and Gatekeeper 1.0 are HIDL HALs, so keep hwservicemanager enabled
+# on Android 17 (installs hwservicemanager_no_max.xml in /system_ext/etc/vintf).
 TARGET_SUPPORTS_HARDWARE_BACKED_SECURITY := true
+PRODUCT_HIDL_ENABLED := true
 
 $(call inherit-product, device/mainline/qcom-common/mainline_qcom-common.mk)
 
@@ -104,6 +107,7 @@ PRODUCT_PACKAGES += \
 # QTEE / QSEECom (open-source external/qcomtee + kernel qcom_qseecom_bridge)
 # + stock qseecomd RPMB/storage listeners + hardware Keymaster 4.1 & Gatekeeper 1.0
 PRODUCT_PACKAGES += \
+    hwservicemanager \
     libQSEEComAPI \
     libion_dmaheap \
     libxml2.vendor \
