@@ -48,6 +48,18 @@ PRODUCT_PACKAGES += \
     otapreopt_script \
     linux_firmware_qcom-a650
 
+# Graphics (Mesa Turnip Vulkan 1.3 on Adreno 650)
+# Install 00-turnip-defaults.conf as /vendor/etc/drirc (vendor_configs_file,
+# readable by all domains under Enforcing SELinux) so tu_emulate_second_queue
+# activates for Android HWUI ("android framework").
+PRODUCT_COPY_FILES += \
+    external/mesa/src/freedreno/vulkan/00-turnip-defaults.conf:$(TARGET_COPY_OUT_VENDOR)/etc/drirc \
+    frameworks/native/data/etc/android.hardware.vulkan.compute-0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.compute.xml \
+    frameworks/native/data/etc/android.hardware.vulkan.level-1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.level.xml \
+    frameworks/native/data/etc/android.hardware.vulkan.version-1_3.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.version.xml \
+    frameworks/native/data/etc/android.software.opengles.deqp.level-2026-03-01.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.opengles.deqp.level.xml \
+    frameworks/native/data/etc/android.software.vulkan.deqp.level-2026-03-01.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.vulkan.deqp.level.xml
+
 PRODUCT_SOONG_NAMESPACES += \
     hardware/qcom-caf/bootctrl
 
