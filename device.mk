@@ -173,6 +173,14 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     android.hardware.vibrator-service.kebab
 
+# Wi-Fi: AIDL V4 IWifi HAL over mainline ath11k_pci (pure nl80211 libwifi-hal-desktop)
+PRODUCT_PACKAGES += \
+    android.hardware.wifi-service
+
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.wifi.direct.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.direct.xml \
+    frameworks/native/data/etc/android.hardware.wifi.passpoint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.passpoint.xml
+
 PRODUCT_COPY_FILES += \
     $(FIRMWARE_PATH)/richtap/lib64/libaacvibrator.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libaacvibrator.so \
     $(FIRMWARE_PATH)/richtap/etc/aac_richtap.config:$(TARGET_COPY_OUT_VENDOR)/etc/aac_richtap.config

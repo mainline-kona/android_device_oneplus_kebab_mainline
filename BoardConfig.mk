@@ -114,6 +114,10 @@ TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
 BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
 -include hardware/samsung-ext/interfaces/sepolicy/SEPolicy.mk
 
+# Wi-Fi (mainline ath11k_pci QCA6390 via pure-nl80211 IWifi AIDL V4 HAL)
+BOARD_WLAN_DEVICE := desktop
+WIFI_HAL_INTERFACE_COMBINATIONS := {{{STA}, 1}, {{AP}, 1}, {{P2P}, 1}},{{{STA}, 1}, {{AP_BRIDGED}, 1}}
+
 # VINTF
 DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/configs/manifest_security.xml
 DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE += $(DEVICE_PATH)/configs/framework_compatibility_matrix.xml

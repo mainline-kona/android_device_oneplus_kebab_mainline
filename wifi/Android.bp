@@ -1,0 +1,27 @@
+//
+// SPDX-FileCopyrightText: The LineageOS Project
+// SPDX-License-Identifier: Apache-2.0
+//
+
+cc_library_static {
+    name: "libwifi-hal-desktop",
+    vendor: true,
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wno-unused-parameter",
+    ],
+    srcs: [
+        "wifi_hal_nl80211.cpp",
+    ],
+    header_libs: [
+        "wifi_legacy_headers",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "liblog",
+        "libnl",
+    ],
+}

@@ -5,18 +5,40 @@
 -->
 <resources>
 
+    <!-- 5 GHz band support (QCA6390 ath11k_pci dual-band 2x2 DBS) -->
+    <bool translatable="false" name="config_wifi5ghzSupport">true</bool>
+
     <!-- Enable concurrent restricted connectivity + internet connectivity
          Note: this is conditional on the device supporting dual concurrent STAs. -->
     <bool translatable="false" name="config_wifiMultiStaRestrictedConcurrencyEnabled">true</bool>
 
-    <!-- Wifi driver supports IEEE80211AX single user beamformee for softap -->
-    <bool name="config_wifiSoftapHeSuBeamformeeSupported">true</bool>
+    <!-- SoftAP band & channel capabilities -->
+    <bool translatable="false" name="config_wifiSoftap24ghzSupported">true</bool>
+    <bool translatable="false" name="config_wifiSoftap5ghzSupported">true</bool>
+    <string translatable="false" name="config_wifiSoftap2gChannelList">1-11</string>
+    <string translatable="false" name="config_wifiSoftap5gChannelList">36,40,44,48,149,153,157,161,165</string>
 
-    <!-- Wifi driver supports IEEE80211AX single user beamformer for softap -->
+    <!-- SoftAP ACS, WPA3-SAE, 802.11ac (Wi-Fi 5), and 802.11ax (Wi-Fi 6) -->
+    <bool translatable="false" name="config_wifi_softap_acs_supported">true</bool>
+    <bool translatable="false" name="config_wifi_softap_sae_supported">true</bool>
+    <bool translatable="false" name="config_wifi_softap_ieee80211ac_supported">true</bool>
+    <bool name="config_wifiSoftapIeee80211axSupported">true</bool>
+    <bool name="config_wifiSoftapHeSuBeamformeeSupported">true</bool>
     <bool name="config_wifiSoftapHeSuBeamformerSupported">true</bool>
 
-    <!-- Wifi driver supports IEEE80211AX for softap -->
-    <bool name="config_wifiSoftapIeee80211axSupported">true</bool>
+    <!-- Dual-band (2.4 + 5 GHz) Bridged SoftAP & STA + Bridged SoftAP concurrency -->
+    <bool translatable="false" name="config_wifiBridgedSoftApSupported">true</bool>
+    <bool translatable="false" name="config_wifiStaWithBridgedSoftApConcurrencySupported">true</bool>
+    <bool translatable="false" name="config_wifiSoftapAutoUpgradeToBridgedConfigWhenSupported">true</bool>
+
+    <!-- 5 GHz Local-Only Hotspot (Quick Share / Android Auto) -->
+    <bool translatable="false" name="config_wifi_local_only_hotspot_5ghz">true</bool>
+
+    <!-- Dynamic country code updates & MAC randomization via IWifi HAL -->
+    <bool translatable="false" name="config_wifiSoftApDynamicCountryCodeUpdateSupported">true</bool>
+    <bool translatable="false" name="config_wifiStaDynamicCountryCodeUpdateSupported">true</bool>
+    <bool translatable="false" name="config_wifi_ap_mac_randomization_supported">true</bool>
+    <bool translatable="false" name="config_wifi_connected_mac_randomization_supported">true</bool>
 
     <!-- Whether to append a random 4-digit number to the default tethering SSID -->
     <bool translatable="false" name="config_wifi_tether_random_ssid_append">false</bool>
