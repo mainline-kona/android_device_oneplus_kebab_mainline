@@ -21,6 +21,10 @@ int main() {
     config->init();
 
     std::shared_ptr<Fingerprint> fingerprint = ndk::SharedRefBase::make<Fingerprint>(config);
+    if (!fingerprint->isInitialized()) {
+        LOG(ERROR) << "Fingerprint HAL failed to initialize; not registering AIDL service";
+        return EXIT_FAILURE;
+    }
 
     const std::string instance = std::string() + Fingerprint::descriptor + "/default";
     binder_status_t status =
