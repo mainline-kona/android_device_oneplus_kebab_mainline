@@ -114,22 +114,23 @@ Captured directly from live hardware (`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1.547
   - Fix `parseRegistrationState()` to accept `>= 4` commas (`+C5GREG: 2,1,"14","10D288002",11,4,"01.000001"` with 36-bit NR NCI and extended `+CEREG:`) and fall back to `+CEREG?`/`+C5GREG?` for both data & voice on LTE/5G-only networks like Jio.
   - Add raw `AF_QIPCRTR` **QMI `NAS_GET_SIGNAL_INFO` (`0x004F`)** support in `readSignalStrength()` (verified live: LTE RSRP/RSRQ/RSSI/SNR & 5G NR RSRP/RSRQ/SINR) + fix 10 s `pollSignalStrength()` timer & `INT_MAX` unused-field initialization.
   - Fix `ril_service.cpp` `convertToPdpProtocolType()` (`strcmp` for `IPV4V6`/`IPV6`/`IP` instead of `strncmp("IP", ..., 2)` which misclassified `IPV6`/`IPV4V6` as IPv4-only!) + add `RADIO_TECH_NR` `V1_5::CellIdentityNr` support.
-- [ ] **Phase 2 & 3 Live Test** (round 1 verified `rild`, all 10 AIDL services, Jio SIM `LOADED`, `carrierId=2018`, real IMEI/ICCID/IMSI/MSISDN, zero `rild` AVCs; round 2 testing `+C5GREG` reg, QMI NAS signal bars, and mobile data after `m vendorimage`):
+- [x] **Phase 2 Live Test — PASSED on Jio 5G SA (`NR_SA`)**:
   - [x] `service list` shows all `android.hardware.radio.*` AIDL services registered (10/10).
-  - [x] `logcat -b radio` shows clean `RILJ` <-> `RILD` handshake, Jio SIM `LOADED`, IMEI/ICCID/IMSI/MSISDN populated, zero `rild` AVCs.
-  - [ ] Status bar displays `Jio True5G` / `4G` or `5G` + real signal bars; Settings -> SIM & About Phone show signal dBm.
-  - [ ] Airplane Mode ON -> OFF cleanly drops and re-registers on network.
+  - [x] `logcat -b radio` shows clean `RILJ` <-> `RILD` handshake, Jio SIM `LOADED` (`carrierId=2018`), real IMEI/ICCID/IMSI/MSISDN populated, zero `rild` AVCs.
+  - [x] `mVoiceRegState=0(IN_SERVICE)`, `mDataRegState=0(IN_SERVICE)`, `gsm.network.type=NR_SA`, `Jio True5G Jio` (`405-861`), real 36-bit `CellIdentityNr` (`nci=4515725314`, `tac=20`).
+  - [x] QMI `NAS_GET_SIGNAL_INFO` (`QRTR node=3 port=57`) reporting real 5G NR signal (`ssRsrp=-97 dBm`, `ssRsrq=-11 dB`, `ssSinr=23 dB`, `level=1`).
+  - [x] Airplane Mode ON -> OFF cleanly drops to `POWER_OFF` (tearing down `rmnet_data0` + `v4-rmnet_data0`) and auto-recovers back to `IN_SERVICE (NR_SA)` + reconnects data.
+  - [x] Fixed boot-time `AT+CFUN=1` race in `initializeCallback()`/`requestRadioPower()` (`stopDataconn(0)` on radio-off, keep `UNAVAILABLE` during AT init, skip redundant `AT+CFUN=1` when modem is already online).
 
 ### Phase 3 — Android Mobile Data Integration
 **Goal**: Native Android mobile data works end-to-end (browser, apps, Wi-Fi <-> Mobile handoff, Airplane mode recovery).
-- [ ] Audit `reference-ril.c` `setupDataCall` / `deactivateDataCall` / `getDataCallList`:
-  - Verify IPv4, IPv6, and dual-stack (`IPV4V6`) address/gateway/DNS/P-CSCF formatting expected by Android 17 `IRadioData/5`.
-  - Verify multi-APN slot tracking (`jionet` + `ims` + `mms`) and `RIL_UNSOL_DATA_CALL_LIST_CHANGED` on modem drop.
-- [ ] Verify `rild.te` SELinux permissions for `kona-dataconn` netlink/ioctl/QRTR/sysfs_net (prepare for enforcing).
-- [ ] **Phase 3 Live Test**:
-  - [ ] Turn Wi-Fi OFF -> Android status bar shows `4G`/`5G` data connected (no `!` exclamation mark).
-  - [ ] Open browser / run download test -> stable high-speed mobile data, `ip route` & DNS resolve cleanly.
-  - [ ] Toggle Mobile Data OFF/ON and Airplane Mode OFF/ON -> clean reconnect every time, no leaked `rmnet_data*` interfaces.
+- [x] Audited `reference-ril.c` & `ril_service.cpp` `setupDataCall` / `deactivateDataCall` / `convertToPdpProtocolType`:
+  - Fixed `IPV6`/`IPV4V6` PDP protocol mapping in `ril_service.cpp` so Android 464XLAT (`clatd`) activates automatically on IPv6-only Jio (`v4-rmnet_data0`, `192.0.0.4/32`, `Nat64Prefix: 64:ff9b::/96`).
+- [x] Verified `rild.te` SELinux permissions for `kona-dataconn` netlink/ioctl/QRTR/sysfs_net (zero `rild` AVCs).
+- [ ] **Phase 3 Live Test** (in progress):
+  - [x] `svc data enable` brings up `rmnet_data0@mhi_hwip0` (Jio IPv6 + MTU 1400) + `v4-rmnet_data0` (464XLAT) automatically in ~0.4 s; Airplane Mode toggle tears down and reconnects cleanly with zero leaked interfaces.
+  - [x] Live 5G SA IPv6 DNS (`www.google.com` 25 ms, `connectivitycheck.gstatic.com` 12 ms) and `ping6 2405:200:800::11` (3/3, 0% loss, 32 ms) verified with valid checksums (`tcpdump` confirmed).
+  - [ ] External internet HTTP/HTTPS validation (confirm active data pack on SIM / test browsing with Wi-Fi OFF).
 
 ### Phase 4 — SMS (Send & Receive)
 **Goal**: Reliable SMS send & receive in LineageOS Messaging (including bank/app OTPs).
