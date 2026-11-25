@@ -96,24 +96,24 @@ Captured directly from live hardware (`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1.547
   - Add `"mhi_hwip0"` as primary parent interface in `get_parent_iface()`.
   - Query `WDA_GET_DATA_FORMAT` with `endpoint_info (PCIE, 4)` first; skip `WDA_SET_DATA_FORMAT` when already configured for Raw-IP + QMAPv5.
   - Extract IPv4 + IPv6 addresses, gateways, DNS, P-CSCF (IPv4 + domain + raw TLV `0x2E` IPv6 P-CSCF), MTU, and clean QMI client/link teardown on `SIGTERM`.
-- [ ] **Phase 1 Live Test** (after building & flashing `boot.img` with `CONFIG_RMNET=y`):
-  - [ ] Run `kona-dataconn jionet ipv4v6 1` over ADB -> `rmnet_data0` comes up with real IP/gateway/DNS.
-  - [ ] `ping -I rmnet_data0 -c 3 8.8.8.8` and/or `ping6 -I rmnet_data0 -c 3 2001:4860:4860::8888` succeeds with 0% packet loss!
-  - [ ] Simultaneously run `kona-dataconn ims ipv4v6 2` -> `rmnet_data1` comes up with real `ims` IP + P-CSCF while `rmnet_data0` keeps pinging!
-  - [ ] Send `SIGTERM` to both -> clean `rmnet_data0`/`rmnet_data1` teardown, no modem crash/stuck session.
+- [x] **Phase 1 Live Test — PASSED on real Jio 5G SA (NR Band n78, ch 42912, RSRP -99 dBm, SNR 19.0 dB)**:
+  - [x] `kona-dataconn jionet ipv4v6 1` -> `rmnet_data0@mhi_hwip0` up with real Jio IPv6 (`2409:40f2:35e:768c::/64`), gateway, DNS (`2405:200:800::11`), MTU `1400`, received live SLAAC Router Advertisement.
+  - [x] `ping6 2405:200:800::11` over `rmnet_data0` -> **3/3 received, 0% packet loss, 31.5 ms min RTT**, zero RX/TX errors/drops on `mhi_hwip0` & `rmnet_data0`!
+  - [x] Simultaneously ran `kona-dataconn ims ipv4v6 2` -> `rmnet_data1@mhi_hwip0` up with real Jio IMS IPv6 (`2409:4132:...`) + **both real IPv6 P-CSCF servers** (`2405:200:642:b471:21::4c`, `2405:200:607:b471:21::112`) extracted via TLV `0x2E`!
+  - [x] `SIGTERM` cleanly tore down both `rmnet_data0` and `rmnet_data1` with zero leaked interfaces.
+  - *Key fix discovered during live test*: Set `QMI_WDS_SET_IP_FAMILY` per WDS client and start IPv6 before IPv4 on dual-stack carriers (`ipv4v6`), plus report negotiated `protocol=IPV6|IP|IPV4V6` so Android's `clatd` (464XLAT) activates automatically on IPv6-only carriers like Jio.
 
 ### Phase 2 — Core AIDL v5 RIL (Radio Power, SIM, Registration, Signal)
 **Goal**: Android Telephony binds to `IRadio*` AIDL v5 services, detects Jio SIM, shows carrier name & real LTE/5G signal bars, and cleanly toggles Airplane Mode.
-- [ ] Wire `kona-ril` into `device/oneplus/kebab_mainline/device.mk`:
+- [x] Wire `kona-ril` into `device/oneplus/kebab_mainline/device.mk`:
   - `PRODUCT_PACKAGES += libcuttlefish-rild kona-dataconn`
-  - `PRODUCT_SOONG_NAMESPACES += hardware/mainline/kona-ril`
   - Install `android.hardware.telephony.{calling,data,gsm,messaging,radio.access,subscription}.xml` permissions.
-- [ ] Add `/vendor/bin/hw/libcuttlefish-rild u:object_r:rild_exec:s0` to `sepolicy/vendor/file_contexts` and verify `rild.te` rules.
-- [ ] Audit & fix `reference-ril.c` for SDX55:
-  - Radio power on/off (`AT+CFUN=1` / `AT+CFUN=0` + DMS online consistency).
-  - SIM card status, ICCID (`EF_ICCID`), IMSI, operator numeric/name (`405861` / `JIO 4G`).
-  - LTE + 5G NR registration (`AT+CEREG=2`, `AT+C5GREG=2`) & real RSRP/RSRQ/SINR via `QMI_SERVICE_NAS`.
-- [ ] **Phase 2 Live Test** (after `m vendorimage odmimage`):
+- [x] Add `/vendor/bin/hw/libcuttlefish-rild u:object_r:rild_exec:s0` to `sepolicy/vendor/file_contexts` and drop stale `vendor.qti.iwlan` strings from `rro/FrameworksResTarget`.
+- [x] Patch `reference-ril.c` for SDX55 LTE + 5G SA:
+  - Enable `AT+CEREG=2` & `AT+C5GREG=2` on init and handle `+CEREG:`/`+C5GREG:` unsolicited notifications.
+  - Fall back to `AT+C5GREG?` in `requestRegistrationState()` so 5G SA NR Band n78 reports `RADIO_TECH_NR`.
+  - Parse `protocol=` from `kona-dataconn` so `IRadioData` gets exact `IPV6`/`IP`/`IPV4V6` (enabling Android 464XLAT on Jio).
+- [ ] **Phase 2 & 3 Live Test** (after `m vendorimage odmimage`):
   - [ ] `service list` shows all `android.hardware.radio.*` AIDL services registered.
   - [ ] `logcat -b radio` shows clean `RILJ` <-> `RILD` handshake, zero crash loops or AT timeouts.
   - [ ] Status bar displays `Jio` / `4G` (or `5G`) + real signal bars; Settings -> SIM & About Phone show IMEI, SIM operator, signal dBm.
@@ -162,3 +162,5 @@ Captured directly from live hardware (`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1.547
 | Date | Phase | Milestone / Finding |
 |---|---|---|
 | 2026-11-25 | Phase 0 | Verified `tqftpserv -i 3` MCFG load, QRTR node 3 QMI services (DMS/UIM/NAS/WDA/WDS/WMS/VOICE/IMSA/DSD), live Jio 4G LTE registration (`CSQ=26`, `CEREG=0,1`), and identified SDX55 AT gaps (`AT+CCHO`/`AT+CGLA`/`AT+CESQ` return `ERROR`) + missing kernel `CONFIG_RMNET`. Created `RIL_BRINGUP.md`. |
+| 2026-11-25 | Phase 1 | **PASSED LIVE**: `CONFIG_RMNET=y` + fixed `kona-dataconn` brought up simultaneous `jionet` (`rmnet_data0`, Jio 5G SA n78 IPv6, 31.5 ms RTT, 0% loss) + `ims` (`rmnet_data1` + real IPv6 P-CSCF via TLV `0x2E`) and cleanly tore down on `SIGTERM`. |
+| 2026-11-25 | Phase 2+3 | Wired `libcuttlefish-rild` + `kona-dataconn` + telephony permissions + `rild_exec` sepolicy + 5G SA `C5GREG` + negotiated `protocol=` reporting into `device.mk` & `kona-ril`. Ready to build & live-test (`m vendorimage odmimage`). |

@@ -30,5 +30,6 @@
 /dev/goodix_fp		u:object_r:vendor_goodix_fp_device:s0
 
 # Telephony (external SDX55 over MHI)
+/vendor/bin/hw/libcuttlefish-rild	u:object_r:rild_exec:s0
 /dev/wwan0at[0-9]+	u:object_r:radio_device:s0
 /dev/wwan0qmi[0-9]+	u:object_r:radio_device:s0
