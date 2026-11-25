@@ -5,6 +5,9 @@
 
 # Bring-up & SurfaceFlinger
 ro.surface_flinger.max_frame_buffer_acquired_buffers=3
+# Android 17 HWUI Vulkan requests 2 queues (kRequestedQueueCount=2), but Mesa
+# Turnip exposes 1 queue family with queueCount=1; use Freedreno SkiaGL.
+debug.hwui.renderer=skiagl
 
 # Light
 vendor.light.backlight.disable=false
