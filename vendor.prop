@@ -16,8 +16,8 @@ debug.hwui.renderer=skiagl
 # Light
 vendor.light.backlight.disable=false
 
-# Sensors (SLPI boots asynchronously after pd-mapper; wait up to 20s for libssc)
-vendor.sensors.ssc.discovery_wait_ms=20000
+# Sensors (keep discovery wait short so missing sensors don't stall system_server)
+vendor.sensors.ssc.discovery_wait_ms=2000
 
 # Bluetooth
 bluetooth.device.default_name=OnePlus 8T
