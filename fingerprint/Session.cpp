@@ -35,6 +35,19 @@ constexpr char kGoodixDevPath[] = "/dev/goodix_fp";
 #define GF_IOC_AUTO_SEND_TOUCHDOWN _IO(GF_IOC_MAGIC, 21)
 #define GF_IOC_AUTO_SEND_TOUCHUP _IO(GF_IOC_MAGIC, 22)
 
+constexpr int kOplusFingerprintEnumeratedType = 11;
+
+struct oplus_fingerprint_enumerated_t {
+    fingerprint_finger_id_t fingers[5];
+    uint32_t count;
+    uint32_t gid;
+};
+
+static_assert(offsetof(fingerprint_msg_t, data) == 8,
+              "fingerprint_msg_t::data offset must match OPlus Goodix HAL (0x08)");
+static_assert(offsetof(oplus_fingerprint_enumerated_t, count) == 0x28,
+              "oplus_fingerprint_enumerated_t::count offset must be 0x28 (msg+0x30)");
+
 std::atomic<bool> sFingerDown{false};
 std::atomic<bool> sUiReady{false};
 std::atomic<bool> sEnrolling{false};
@@ -448,7 +461,7 @@ void Session::lockoutTimerExpired() {
 }
 
 void Session::notify(const fingerprint_msg_t* msg) {
-    switch (msg->type) {
+    switch (static_cast<int>(msg->type)) {
         case FINGERPRINT_ERROR: {
             int32_t vendorCode = 0;
             Error result = VendorErrorFilter(msg->data.error, &vendorCode);
@@ -524,6 +537,43 @@ void Session::notify(const fingerprint_msg_t* msg) {
                 mCb->onEnrollmentsEnumerated(completed);
                 mEnumerateCv.notify_all();
             }
+        } break;
+        case kOplusFingerprintEnumeratedType: {
+            /*
+             * OPlus Goodix HALs (19805 G6_3/G6_7) send all enrolled templates in a
+             * single batch callback with msg->type == 11 instead of standard AOSP
+             * FINGERPRINT_TEMPLATE_ENUMERATING (6).
+             */
+            const auto* oplusEnum =
+                    reinterpret_cast<const oplus_fingerprint_enumerated_t*>(&msg->data);
+            uint32_t count = oplusEnum->count;
+            if (count > 5) count = 5;
+            std::vector<int32_t> completed;
+            bool shouldNotify = false;
+            {
+                std::lock_guard<std::mutex> lock(mEnumerateMutex);
+                if (!mEnumerateDone) {
+                    for (uint32_t i = 0; i < count; ++i) {
+                        uint32_t fid = oplusEnum->fingers[i].fid;
+                        uint32_t gid = oplusEnum->fingers[i].gid;
+                        ALOGI("onOplusEnumerate[%u/%u](fid=%u, gid=%u)", i, count, fid, gid);
+                        if (fid != 0) {
+                            completed.push_back(static_cast<int32_t>(fid));
+                        }
+                    }
+                    mEnrollments.clear();
+                    mEnumerateDone = true;
+                    shouldNotify = true;
+                }
+            }
+            if (shouldNotify) {
+                ALOGI("onOplusEnumerate: reporting %zu enrolled template(s)", completed.size());
+                mCb->onEnrollmentsEnumerated(completed);
+                mEnumerateCv.notify_all();
+            }
+        } break;
+        default: {
+            ALOGW("Unhandled fingerprint_msg_t type=%d", static_cast<int>(msg->type));
         } break;
     }
 }
