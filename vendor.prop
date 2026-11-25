@@ -16,7 +16,10 @@ debug.hwui.renderer=skiagl
 # Light
 vendor.light.backlight.disable=false
 
-# Sensors (keep discovery wait short so missing sensors don't stall system_server)
+# Sensors: skip libssc until SLPI registry write support is added to hexagonrpcd
+# (libssc otherwise retries 'registry' 100x1s synchronously before registering
+# ISensors/default, triggering a 90s system_server Watchdog kill & Zygote restart)
+vendor.sensors.backends=iio
 vendor.sensors.ssc.discovery_wait_ms=2000
 
 # Bluetooth
