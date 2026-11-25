@@ -143,6 +143,9 @@ PRODUCT_COPY_FILES += \
     $(FIRMWARE_PATH)/qcom/a650_gmu.bin:$(TARGET_COPY_OUT_RAMDISK)/lib/firmware/qcom/a650_gmu.bin \
     $(FIRMWARE_PATH)/qcom/a650_sqe.fw:$(TARGET_COPY_OUT_RAMDISK)/system/etc/firmware/qcom/a650_sqe.fw \
     $(FIRMWARE_PATH)/qcom/a650_gmu.bin:$(TARGET_COPY_OUT_RAMDISK)/system/etc/firmware/qcom/a650_gmu.bin \
+    $(FIRMWARE_PATH)/qcom/sm8250/OnePlus/kebab/a650_zap.mbn:$(TARGET_COPY_OUT_VENDOR)/firmware/qcom/sm8250/OnePlus/kebab/a650_zap.mbn \
+    $(FIRMWARE_PATH)/qcom/sm8250/OnePlus/kebab/a650_zap.mbn:$(TARGET_COPY_OUT_RAMDISK)/lib/firmware/qcom/sm8250/OnePlus/kebab/a650_zap.mbn \
+    $(FIRMWARE_PATH)/qcom/sm8250/OnePlus/kebab/a650_zap.mbn:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/qcom/sm8250/OnePlus/kebab/a650_zap.mbn \
     $(FIRMWARE_PATH)/adb_keys:$(TARGET_COPY_OUT_RAMDISK)/adb_keys \
     $(FIRMWARE_PATH)/adb_keys:$(TARGET_COPY_OUT_RECOVERY)/root/adb_keys \
     $(FIRMWARE_PATH)/adb_keys:$(TARGET_COPY_OUT_PRODUCT)/etc/security/adbd_keys
