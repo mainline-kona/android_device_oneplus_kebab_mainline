@@ -5,6 +5,10 @@
 
 # Bring-up & SurfaceFlinger
 ro.surface_flinger.max_frame_buffer_acquired_buffers=3
+# simpledrm takes card0 and unregisters after msm-kms probes; with
+# msm.separate_gpu_kms=1, GPU is card1 and msm-kms display is card2.
+# drm_hwcomposer stops scanning on missing card0, so point it at card2.
+vendor.hwc.drm.device=/dev/dri/card2
 # Android 17 HWUI Vulkan requests 2 queues (kRequestedQueueCount=2), but Mesa
 # Turnip exposes 1 queue family with queueCount=1; use Freedreno SkiaGL.
 debug.hwui.renderer=skiagl
