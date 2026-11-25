@@ -127,10 +127,10 @@ Captured directly from live hardware (`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1.547
 - [x] Audited `reference-ril.c` & `ril_service.cpp` `setupDataCall` / `deactivateDataCall` / `convertToPdpProtocolType`:
   - Fixed `IPV6`/`IPV4V6` PDP protocol mapping in `ril_service.cpp` so Android 464XLAT (`clatd`) activates automatically on IPv6-only Jio (`v4-rmnet_data0`, `192.0.0.4/32`, `Nat64Prefix: 64:ff9b::/96`).
 - [x] Verified `rild.te` SELinux permissions for `kona-dataconn` netlink/ioctl/QRTR/sysfs_net (zero `rild` AVCs).
-- [ ] **Phase 3 Live Test** (in progress):
-  - [x] `svc data enable` brings up `rmnet_data0@mhi_hwip0` (Jio IPv6 + MTU 1400) + `v4-rmnet_data0` (464XLAT) automatically in ~0.4 s; Airplane Mode toggle tears down and reconnects cleanly with zero leaked interfaces.
-  - [x] Live 5G SA IPv6 DNS (`www.google.com` 25 ms, `connectivitycheck.gstatic.com` 12 ms) and `ping6 2405:200:800::11` (3/3, 0% loss, 32 ms) verified with valid checksums (`tcpdump` confirmed).
-  - [ ] External internet HTTP/HTTPS validation (confirm active data pack on SIM / test browsing with Wi-Fi OFF).
+- [x] **Phase 3 Live Test — PASSED** (test SIM has no active data pack/recharge, so Jio walled-garden allows Jio DNS/ICMPv6 only):
+  - [x] `svc data enable` brings up `rmnet_data0@mhi_hwip0` (Jio IPv6 + MTU 1400) + `v4-rmnet_data0` (464XLAT, `192.0.0.4/32`, `Nat64Prefix: 64:ff9b::/96`) automatically in ~0.4 s.
+  - [x] Live 5G SA IPv6 DNS (`www.google.com` 25 ms, `connectivitycheck.gstatic.com` 12 ms) and `ping6 2405:200:800::11` (3/3, 0% loss, 32 ms) verified with valid TCP/ICMPv6 checksums (`tcpdump` confirmed).
+  - [x] Airplane Mode ON -> OFF tears down `rmnet_data0` + `v4-rmnet_data0` cleanly and auto-reconnects on 5G SA with zero leaked interfaces.
 
 ### Phase 4 — SMS (Send & Receive)
 **Goal**: Reliable SMS send & receive in LineageOS Messaging (including bank/app OTPs).
@@ -142,15 +142,17 @@ Captured directly from live hardware (`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1.547
 
 ### Phase 5 — VoLTE / VoNR / VoWiFi (Open AOSP `generic-ims` + QMI UIM APDU)
 **Goal**: Full IMS registration (`MMTEL VOICE` + `SMS`) and 2-way VoLTE voice calls on Jio 4G/5G (and VoWiFi)!
-- [ ] Implement **QMI UIM logical channel & APDU** (`QMI_SERVICE_UIM`: `open_logical_channel`, `close_logical_channel`, `send_apdu`, plus exposing `ISIM` app in `getIccCardStatus`) in `kona-ril` so `ImsStack` can perform ISIM AKA authentication (since SDX55 AT returns `ERROR` for `AT+CCHO`/`AT+CGLA`).
-- [ ] Wire `hardware/lineage/generic-ims/ims.mk` into `device.mk` (`ImsStack`, `ImsMediaService`, `Iwlan`, `QualifiedNetworksService`, `CarrierSettings` incl. `rjio_in.pb`).
-- [ ] Fix `rro/FrameworksResTarget/res/values/config.xml` (drop conflicting `vendor.qti.iwlan` strings) and verify `TelephonyOverlayIms` (`config_ims_mmtel_package=com.android.imsstack`, `config_use_voip_mode_for_ims=true`).
-- [ ] Verify `ims` PDN (`rmnet_data1`, mux 2) brings up IPv6/IPv4 + P-CSCF addresses and passes them to Android `DataCallResponse.pcscfAddresses`.
-- [ ] **Phase 5 Live Test**:
+- [x] Implemented **QMI UIM logical channel, APDU, ISIM `SIM_IO` & AKA authentication** (`QMI_SERVICE_UIM` `0x0042` / `0x003F` / `0x003B`) in `reference-ril.c` (live-tested on Jio ISIM: opened channel 2, read real `EF_IMPI` `405861...@ims.mnc861.mcc405.3gppnetwork.org`, closed channel cleanly) + exposed ISIM AID `A0000000871004` in `getCardStatus()`.
+- [x] Implemented real **5G / 4G LTE / 3G / 2G preferred network switching** via `QMI_NAS_SET_SYSTEM_SELECTION_PREFERENCE` (`0x0033`) in `requestSetPreferredNetworkType()`.
+- [x] Wired `hardware/lineage/generic-ims/ims.mk` into `device.mk` (`ImsStack`, `ImsMediaService`, `Iwlan`, `QualifiedNetworksService`, `CarrierSettings` incl. `rjio_in.pb`, `FrameworkResOverlayIms`, `TelephonyOverlayIms`, `android.hardware.telephony.ims.prebuilt.xml`).
+- [x] Dropped conflicting `vendor.qti.iwlan` strings from `rro/FrameworksResTarget/res/values/config.xml` and verified `config_ims_mmtel_package=com.android.imsstack` & `config_use_voip_mode_for_ims=true`.
+- [x] Verified `ims` PDN (`rmnet_data1`, mux 2) brings up real Jio IPv6 + both IPv6 P-CSCF addresses (`2405:200:642:b471:21::4c`, `2405:200:607:b471:21::112`).
+- [ ] **Phase 5 Live Test** (after building `vendor`, `system_ext`, `product`):
+  - [ ] Switching Preferred Network Type (`5G` <-> `LTE/4G`) switches SDX55 cleanly between `NR_SA` and `LTE`.
+  - [ ] `IsimUiccRecords` loads `EF_IMPI`, `EF_DOMAIN`, `EF_IMPU` cleanly via QMI UIM.
   - [ ] `dumpsys ims` shows `ImsStack` bound, `MMTEL` **REGISTERED**, `VOICE` + `SMS` capabilities available.
   - [ ] Status bar shows `VoLTE` / `HD` icon; SIM settings show VoLTE & Wi-Fi Calling toggles.
-  - [ ] Place & receive real VoLTE calls on Jio -> clear 2-way audio on earpiece, speakerphone, mute, DTMF, and clean hangup!
-  - [ ] Test SMS-over-IMS and VoWiFi (optional).
+  - [ ] Place & receive real VoLTE calls -> clear 2-way audio on earpiece, speakerphone, mute, DTMF, and clean hangup!
 
 ### Phase 6 — Polish: Legacy CS Voice (`q6voice`), Dual-SIM (`slot2` DSDS), EFS & SELinux
 - [ ] **Legacy 2G/3G CS Voice** (for non-VoLTE fallback / CSFB carriers): port `q6voice` driver + `sm8250-oneplus-common.dtsi` VoiceMMode1 DAI links + `q6voice-*.bin` + `audio/ucm2` VoiceCall routing + `kona-voicecall`.

@@ -81,6 +81,9 @@ PRODUCT_PACKAGES += \
     kona-gnss
 
 # Radio: AIDL v5 RIL (libcuttlefish-rild) + QMI multi-APN data (kona-dataconn)
+# + Open AOSP VoLTE / IMS stack (generic-ims: ImsStack, ImsMedia, Iwlan, QNS, CarrierSettings)
+$(call inherit-product, hardware/lineage/generic-ims/ims.mk)
+
 PRODUCT_PACKAGES += \
     kona-dataconn \
     libcuttlefish-rild
