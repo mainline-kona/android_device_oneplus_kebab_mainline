@@ -15,6 +15,7 @@ TARGET_GRAPHICS_VULKAN := mesa
 BOARD_MESA3D_USES_MESON_BUILD := true
 LINEAGE_BUILD := true
 TARGET_FOLLOWS_LATEST_VINTF_TARGET_LEVEL := true
+TARGET_POWER_HAL := perfmgr-lineage
 
 include device/mainline/qcom-common/BoardConfigMainlineQcomCommon.mk
 

@@ -15,6 +15,9 @@ TARGET_SENSORS_HAL := mainline
 # (replaces optional vibrator-hal_mainline APEX).
 TARGET_VIBRATOR_HAL := richtap
 
+# Power: LineageOS libperfmgr AIDL HAL with ADPF + mainline cpufreq/devfreq/uclamp powerhint.json
+TARGET_POWER_HAL := perfmgr-lineage
+
 TARGET_BOARD_PLATFORM := qcom
 TARGET_QCOM_SOC := sm8250
 TARGET_GRAPHICS := mesa

@@ -47,6 +47,12 @@ prebuilt_etc {
     vendor: true,
 }
 
+prebuilt_etc {
+    name: "powerhint.json",
+    src: "configs/powerhint.json",
+    vendor: true,
+}
+
 sh_binary {
     name: "kebab-pdready.sh",
     src: "init/kebab-pdready.sh",

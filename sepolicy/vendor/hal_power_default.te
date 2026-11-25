@@ -1,0 +1,21 @@
+# ADPF updates app threads across per-app MLS categories.
+typeattribute hal_power_default mlstrustedsubject;
+
+# Allow hal_power_default to control GPU/UFS devfreq and CPU cpufreq nodes
+allow hal_power_default vendor_sysfs_devfreq:dir r_dir_perms;
+allow hal_power_default vendor_sysfs_devfreq:file rw_file_perms;
+allow hal_power_default sysfs_devices_system_cpu:dir r_dir_perms;
+
+# Allow reading /proc/stat for CPU utilization / ADPF
+allow hal_power_default proc_stat:file r_file_perms;
+
+# Allow hal_power_default to set scheduling attributes and uclamp for ADPF
+allow hal_power_default self:global_capability_class_set sys_nice;
+allow hal_power_default appdomain:process { getsched setsched };
+allow hal_power_default surfaceflinger:process { getsched setsched };
+allow hal_power_default hal_graphics_composer_default:process { getsched setsched };
+allow hal_power_default system_server:process { getsched setsched };
+
+# Allow SetAttribute to resolve target cgroup via /proc/<tid>/cgroup
+allow hal_power_default appdomain:dir search;
+allow hal_power_default appdomain:{ file lnk_file } r_file_perms;
