@@ -14,4 +14,8 @@ if [ ! -d /sys/class/net/wlan0 ] && [ -e /sys/bus/pci/drivers/ath11k_pci/0000:01
     echo 0000:01:00.0 > /sys/bus/pci/drivers/ath11k_pci/unbind
     echo 0000:01:00.0 > /sys/bus/pci/drivers/ath11k_pci/bind
 fi
+# Boot SLPI/CDSP/ADSP immediately in parallel with post-fs-data/apexd so SLPI
+# is up before class_start hal starts vendor.sensors-mainline (otherwise libssc
+# hits 6x10s QMI timeouts delaying system_server by ~62s).
+/vendor/bin/sh /vendor/bin/init.mainline.qcom.start_remoteproc.sh
 setprop sys.kebab.pdready 1

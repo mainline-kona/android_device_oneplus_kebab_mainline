@@ -51,6 +51,9 @@ on post-fs
     # "cdsp.mdt", "slpi.mdt" and "venus.mdt", so point the kernel loader there
     # before (re)starting the remoteprocs.
     write /sys/module/firmware_class/parameters/path /vendor/firmware_mnt/image
+    # Configure local QRTR node ID before early QRTR services (tqftpserv, pd-mapper)
+    # and DSP remoteprocs start.
+    exec - root -- /vendor/bin/qrtr-cfg 1
     # The X55 fetches its MCFG/RF config files over TFTP (QRTR service 4096)
     # while it boots, a few seconds after sbl1.mbn becomes readable here.
     # qcom-common only starts tqftpserv at "boot", well after the modem asked
@@ -59,9 +62,12 @@ on post-fs
     start vendor.tqftpserv_early
     # Venus loads firmware at probe time (before /vendor was mounted); retry now
     write /sys/bus/platform/drivers/qcom-venus/bind aa00000.video-codec
-    # pd-mapper must publish the DSP protection-domain maps before the
-    # remoteprocs (SLPI sensors, ADSP) start below.
+    # pd-mapper and hexagonrpcd must be running before SLPI/ADSP boot in
+    # kebab-pdready.sh so SLPI sensors are ready before class_start hal starts
+    # vendor.sensors-mainline (avoiding 60s of libssc QMI discovery timeouts).
     start vendor.pd-mapper
+    start vendor.hexagonrpcd-sdsp
+    start vendor.hexagonrpcd-adsp-rootpd
     # EFS write-back: disabled during bringup to protect mdm1m9kefs* flash partitions
     # from persistent corruption until modem boot stability is fully proven.
     write /sys/module/sahara_mdm/parameters/efs_writeback 0
