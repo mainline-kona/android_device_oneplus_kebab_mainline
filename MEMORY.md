@@ -9,7 +9,7 @@
 - **Device**: OnePlus 8T (`kebab`, SM8250 / Kona + external Qualcomm SDX55 5G modem over PCIe2/MHI)
 - **ROM**: LineageOS 24.0 (Android 17) at `/serverhive5/zenzer0s/los`
 - **Device Tree**: `/serverhive5/zenzer0s/los/device/oneplus/kebab_mainline` (branch `main`)
-- **RIL Repo**: `/serverhive5/zenzer0s/los/hardware/mainline/kona-ril` (branch `empty`, HEAD `d2a8c05`)
+- **RIL Repo**: `/serverhive5/zenzer0s/los/hardware/mainline/kona-ril` (branch `empty`, HEAD `8d962cc`)
 - **Kernel**: `/serverhive5/zenzer0s/mainline-kona` (branch `android17-6.18-lts-8t`, ACK `android17-6.18-lts`, HEAD `1734a29f39c9`)
 - **Reference Trees**:
   - Stock kebab kernel/DTS: `/serverhive5/zenzer0s/ref-stock-kebab`
@@ -50,33 +50,29 @@
     - **Cold-Boot RIL (`aabb70b`)**: `libcuttlefish-rild` came up cleanly on cold boot with zero restarts (`gsm.sim.state=LOADED`, `IN_SERVICE`, `kona-dataconn jionet` up automatically).
     - **Real 5G ↔ 4G LTE Switching (`07017e3`)**: `QMI NAS SetSystemSelectionPreference` (`0x0033`) switched SDX55 live between `NR_SA` (`bitmap=0x11ce0e -> mode_pref=0x005c`) and `LTE` (`bitmap=0x1ce0e -> mode_pref=0x001c`, `gsm.network.type=LTE`, `JIO 4G Jio`, LTE QMI signal `rssi=-67 rsrp=-97 rsrq=-9 rssnr=11 level=4` — full 4/4 bars!).
     - **QMI UIM ISIM Records (`07017e3`)**: `IsimUiccRecords` loaded `EF_ISIM_IMPI`, `EF_ISIM_DOMAIN`, `EF_ISIM_IST` live via QMI UIM (`0x0042`/`0x003F`/`0x003B`).
-    - **Open AOSP IMS (`02a6447`)**: All 4 IMS processes (`com.android.imsstack`, `imsmedia`, `iwlan`, `qns`) running cleanly on cold boot; `ImsResolver` bound `com.android.imsstack` for `MMTEL` + `EMERGENCY_MMTEL` (`state=READY`); Jio `405861` CarrierConfig (`carrier_volte_available_bool=true`, `ims.supported_rats=[3, 5, 6]`) & `ims` APN (`IPV4V6`) active.
+    - **Open AOSP VoNR + VoLTE + SMS-over-IMS (`02a6447`, `f0d5d02`) — REGISTERED LIVE!**:
+      - `LteVopsSupportInfo: mVopsSupport = 2, mEmcBearerSupport = 2` -> `rmnet_data1` (`ims` PDN) came up automatically with real Jio IPv6 (`2409:4132:...`).
+      - `requestSimAuthentication(QMI UIM): ctx=129 sw=9000 payload_len=44` succeeded!
+      - `com.android.imsstack` **REGISTERED** (`registered=[mmtel smsip]`, `LTE: [voice ut sms]`, `NR: [voice sms]`, `IWLAN: [voice sms]`, `isImsRegistered=true`, `isVolteEnabled=true`, `isUtEnabled=true`).
+    - **USIM FCP / `EF_SPN` (`a1bd6ff`) — PASSED LIVE!**: `[gsm.sim.operator.alpha]: [Jio]` + all 20+ Jio `ehplmns` loaded cleanly.
+    - **AAC RichTap X-Axis LRA Haptics (`1734a29f39c9`, `c16a48a`, `f7ced20`) — PASSED LIVE!**:
+      - `/dev/awinic_haptic` (`vendor_haptic_device`), `android.hardware.vibrator-service.kebab` (`hal_vibrator_default`, zero AVCs), calibrated resonant freq `174.3 Hz`, `AacRichTapDispEqualiza` streaming live, SystemUI crisp `TICK`/`CLICK` feedback & compositions completing in `18–29 ms`.
 
 ---
 
 ## 3. Committed Locally & Ready to Build/Flash Next (NOT Yet Flashed)
 
-Only **FOUR** `vendor.img` commits are pending flash (VoLTE/VoNR + real Baseband + USIM FCP/`EF_SPN` + IMEI SV):
+Only **ONE** `vendor.img` commit is pending flash (`8d962cc` in `hardware/mainline/kona-ril`):
 
-1. **`hardware/mainline/kona-ril` (`f0d5d02`) — Fix `VOPS_NOT_SUPPORTED` IMS PDN blocker**:
-   - **What blocked IMS on the live test**: `DataNetworkController` rejected `com.android.imsstack`'s `IMS&MMTEL` PDN request with `Data disallowed reasons: VOPS_NOT_SUPPORTED` on both `NR` and `LTE` because `ril_service.cpp` hardcoded `isVopsSupported = false` (LTE) and `vopsSupported = VOPS_NOT_SUPPORTED` (NR SA).
-   - **Fix**: Updated V1_6 & V1_5 `getVoiceRegistrationStateResponse()` and `getDataRegistrationStateResponse()` in `ril_service.cpp` to report `lteVopsInfo.isVopsSupported = true` (LTE/LTE_CA) and `nrVopsInfo.vopsSupported = VOPS_OVER_3GPP` + `EMC/EMF_NR_CONNECTED_TO_5GCN` (NR SA) whenever registered (`REG_HOME` / `REG_ROAMING`). Compile-verified cleanly (`REAL_COMPILE_OK`).
-2. **`hardware/mainline/kona-ril` (`c39071e`) — Query real SDX55 baseband version via QMI DMS**:
-   - Replaced hardcoded `"1.0.0.0"` in `requestCdmaBaseBandVersion()` with live `QMI_SERVICE_DMS (2)` `QMI_DMS_GET_SW_VERSION (0x0051)` TLV `0x11` (fallback TLV `0x01`, `0x0023`, `AT+CGMR`), reporting the real running modem baseband version (`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1.5472.139.63951.2`). Compile-verified cleanly (`REAL_COMPILE_OK`).
-3. **`hardware/mainline/kona-ril` (`a1bd6ff`) — Fix USIM `GET_RESPONSE` FCP truncation (`"J"` SPN bug)**:
-   - `AT+CRSM=192,<fileid>,0,0,15` truncated 29-byte USIM FCPs before the `0x80` file-size TLV, and `convertUsimToSim()` fell back to `sizeIndex=0` (`0x8202` = `33282`), truncating `EF_SPN` (`"Jio"` -> `"J"`), `EF_PNN`, `EF_AD`, `EF_UST`, etc. Fixed `requestSIM_IO()` to request full FCP (`AT+CRSM=192,<fileid>` with `p3=0` & exact-length retries) and hardened `convertUsimToSim()` with proper TLV walking and bounds checks. Compile-verified cleanly.
-4. **`hardware/mainline/kona-ril` (`d2a8c05`) — Query real IMEI, IMEI SV (`17`), and MEID via QMI DMS**:
-   - `requestDeviceIdentity()` previously hardcoded IMEI SV to `""` (empty) and ESN to fake `"77777777"`. Wired `QMI_DMS_GET_DEVICE_SERIAL_NUMBERS (0x0025)` (TLV `0x11` IMEI, `0x13` IMEI SV `17`, `0x12` MEID, with `AT+CGSN` fallback). Compile-verified cleanly.
-5. **AAC RichTap X-Axis LRA Haptics (Kernel `1734a29f39c9` + Firmware `c16a48a` + Device Tree `vibrator/`)**:
-   - **Kernel (`mainline-kona` `1734a29f39c9`)**: Extended `drivers/input/misc/aw8695-haptics.c` with `/dev/awinic_haptic` RichTap ioctls + 16×1000-byte mmap ring buffer + high-priority AW8697 RTP FIFO streamer + calibrated `f0` reporting (`RICHTAP_GET_F0`) + 2 KB SRAM FIFO AE/AF config. Compile-verified cleanly against Linux 6.18.
-   - **Firmware (`kebab_mainline-firmware` `c16a48a`)**: Added `richtap/lib64/libaacvibrator.so` & `richtap/etc/aac_richtap.config`.
-   - **HAL (`device/oneplus/kebab_mainline/vibrator/`)**: Added Android 17 AIDL V4 `IVibrator` + `IVibratorManager` service (`android.hardware.vibrator-service.kebab`, `TARGET_VIBRATOR_HAL := richtap`) calling `libaacvibrator.so` (`aac_vibra_init`, `on`, `stop`, `setAmplitude`, `perform_id` prebaked effects `0x3007`..`0x300b`, `compose` primitives, real `f0`), wired `vendor.prop`, `ueventd.kebab.rc`, and SELinux (`vendor_haptic_device`, `vendor_richtap_prop`, `hal_vibrator_default.te`). All 4 `.cpp` files compile-verified cleanly against `android.hardware.vibrator-V4-ndk`.
+1. **`hardware/mainline/kona-ril` (`8d962cc`) — Fix real IMEI/IMEI SV (`17`) & full Baseband version**:
+   - Removed Cuttlefish's hardcoded fake `RefRadioModem::getImei()` override (`"867400022047199"` / `"01"`), so `RadioModem::getImei()` delegates directly to our real QMI DMS `requestDeviceIdentity()` (real SDX55 IMEI + IMEI SV **`17`**).
+   - Fixed `qmiDmsGetBasebandVersion()` to trim trailing `.build` suffix after `PACK-<n>` when `> 45` chars so Android `GsmCdmaPhone` (`PROP_VALUE_MAX / 2 = 45`) stops front-truncating `"MPSS.HI.2"` — now displays full **`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1`**.
 
-**Next Build Command for User (`boot.img` + `vendor.img`)**:
+**Next Build Command for User (`vendor.img` only!)**:
 ```bash
-m bootimage vendorimage
+m vendorimage
 ```
-(then flash `boot.img` and `vendor.img`).
+(then flash `vendor.img`).
 
 ---
 
