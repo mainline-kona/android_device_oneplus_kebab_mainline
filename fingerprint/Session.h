@@ -79,6 +79,8 @@ class Session : public BnSession {
 
     bool mIsLockoutTimerStarted = false;
     bool mIsLockoutTimerAborted = false;
+    bool mEnumerateNotified = false;
+    std::vector<int32_t> mEnrollments;
 
     int32_t mUserId;
     std::shared_ptr<ISessionCallback> mCb;

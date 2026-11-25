@@ -143,9 +143,15 @@ ndk::ScopedAStatus Session::detectInteraction(std::shared_ptr<ICancellationSigna
 }
 
 ndk::ScopedAStatus Session::enumerateEnrollments() {
+    mEnumerateNotified = false;
+    mEnrollments.clear();
     int error = mDevice->enumerate(mDevice);
     if (error) {
         ALOGE("enumerate failed: %d", error);
+    }
+    if (!mEnumerateNotified) {
+        ALOGI("enumerate returned synchronously with no templates; notifying empty list");
+        mCb->onEnrollmentsEnumerated({});
     }
 
     return ndk::ScopedAStatus::ok();
@@ -418,11 +424,13 @@ void Session::notify(const fingerprint_msg_t* msg) {
         case FINGERPRINT_TEMPLATE_ENUMERATING: {
             ALOGD("onEnumerate(fid=%d, gid=%d, rem=%d)", msg->data.enumerated.finger.fid,
                   msg->data.enumerated.finger.gid, msg->data.enumerated.remaining_templates);
-            static std::vector<int> enrollments;
-            enrollments.push_back(msg->data.enumerated.finger.fid);
+            mEnumerateNotified = true;
+            if (msg->data.enumerated.finger.fid != 0) {
+                mEnrollments.push_back(msg->data.enumerated.finger.fid);
+            }
             if (msg->data.enumerated.remaining_templates == 0) {
-                mCb->onEnrollmentsEnumerated(enrollments);
-                enrollments.clear();
+                mCb->onEnrollmentsEnumerated(mEnrollments);
+                mEnrollments.clear();
             }
         } break;
     }
