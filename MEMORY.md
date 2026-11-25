@@ -9,7 +9,7 @@
 - **Device**: OnePlus 8T (`kebab`, SM8250 / Kona + external Qualcomm SDX55 5G modem over PCIe2/MHI)
 - **ROM**: LineageOS 24.0 (Android 17) at `/serverhive5/zenzer0s/los`
 - **Device Tree**: `/serverhive5/zenzer0s/los/device/oneplus/kebab_mainline` (branch `main`)
-- **RIL Repo**: `/serverhive5/zenzer0s/los/hardware/mainline/kona-ril` (branch `empty`, HEAD `c39071e`)
+- **RIL Repo**: `/serverhive5/zenzer0s/los/hardware/mainline/kona-ril` (branch `empty`, HEAD `a1bd6ff`)
 - **Kernel**: `/serverhive5/zenzer0s/mainline-kona` (branch `android17-6.18-lts-8t`, ACK `android17-6.18-lts`, HEAD `3a5bd1dd5b94`)
 - **Reference Trees**:
   - Stock kebab kernel/DTS: `/serverhive5/zenzer0s/ref-stock-kebab`
@@ -56,13 +56,15 @@
 
 ## 3. Committed Locally & Ready to Build/Flash Next (NOT Yet Flashed)
 
-Only **TWO** `vendor.img` commits are pending flash (VoLTE/VoNR + real Baseband version):
+Only **THREE** `vendor.img` commits are pending flash (VoLTE/VoNR + real Baseband + USIM FCP/`EF_SPN` fix):
 
 1. **`hardware/mainline/kona-ril` (`f0d5d02`) — Fix `VOPS_NOT_SUPPORTED` IMS PDN blocker**:
    - **What blocked IMS on the live test**: `DataNetworkController` rejected `com.android.imsstack`'s `IMS&MMTEL` PDN request with `Data disallowed reasons: VOPS_NOT_SUPPORTED` on both `NR` and `LTE` because `ril_service.cpp` hardcoded `isVopsSupported = false` (LTE) and `vopsSupported = VOPS_NOT_SUPPORTED` (NR SA).
    - **Fix**: Updated V1_6 & V1_5 `getVoiceRegistrationStateResponse()` and `getDataRegistrationStateResponse()` in `ril_service.cpp` to report `lteVopsInfo.isVopsSupported = true` (LTE/LTE_CA) and `nrVopsInfo.vopsSupported = VOPS_OVER_3GPP` + `EMC/EMF_NR_CONNECTED_TO_5GCN` (NR SA) whenever registered (`REG_HOME` / `REG_ROAMING`). Compile-verified cleanly (`REAL_COMPILE_OK`).
 2. **`hardware/mainline/kona-ril` (`c39071e`) — Query real SDX55 baseband version via QMI DMS**:
    - Replaced hardcoded `"1.0.0.0"` in `requestCdmaBaseBandVersion()` with live `QMI_SERVICE_DMS (2)` `QMI_DMS_GET_SW_VERSION (0x0051)` TLV `0x11` (fallback TLV `0x01`, `0x0023`, `AT+CGMR`), reporting the real running modem baseband version (`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1.5472.139.63951.2`). Compile-verified cleanly (`REAL_COMPILE_OK`).
+3. **`hardware/mainline/kona-ril` (`a1bd6ff`) — Fix USIM `GET_RESPONSE` FCP truncation (`"J"` SPN bug)**:
+   - `AT+CRSM=192,<fileid>,0,0,15` truncated 29-byte USIM FCPs before the `0x80` file-size TLV, and `convertUsimToSim()` fell back to `sizeIndex=0` (`0x8202` = `33282`), truncating `EF_SPN` (`"Jio"` -> `"J"`), `EF_PNN`, `EF_AD`, `EF_UST`, etc. Fixed `requestSIM_IO()` to request full FCP (`AT+CRSM=192,<fileid>` with `p3=0` & exact-length retries) and hardened `convertUsimToSim()` with proper TLV walking and bounds checks. Compile-verified cleanly.
 
 **Next Build Command for User (vendor only!)**:
 ```bash
