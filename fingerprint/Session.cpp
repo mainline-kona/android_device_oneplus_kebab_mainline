@@ -35,9 +35,8 @@ constexpr char kGoodixDevPath[] = "/dev/goodix_fp";
 #define GF_IOC_AUTO_SEND_TOUCHDOWN _IO(GF_IOC_MAGIC, 21)
 #define GF_IOC_AUTO_SEND_TOUCHUP _IO(GF_IOC_MAGIC, 22)
 
-constexpr auto kHbmSettleDelay = std::chrono::milliseconds(20);
-
 std::atomic<bool> sFingerDown{false};
+std::atomic<bool> sUiReady{false};
 
 void sendGoodixTouchIoctl(bool down) {
     int fd = open(kGoodixDevPath, O_RDWR | O_CLOEXEC);
@@ -53,6 +52,15 @@ void sendGoodixTouchIoctl(bool down) {
     close(fd);
 }
 
+void notifyUiReady() {
+    if (!sFingerDown.load()) {
+        return;
+    }
+    if (!sUiReady.exchange(true)) {
+        ::android::base::WriteStringToFile("1", kOplusFpPressPath);
+    }
+}
+
 void setFingerDown(bool down) {
     bool prev = sFingerDown.exchange(down);
     if (down == prev && !down) {
@@ -60,13 +68,15 @@ void setFingerDown(bool down) {
     }
 
     if (down) {
+        sUiReady.store(false);
         ::android::base::WriteStringToFile("1", kOplusHbmPath);
-        ::android::base::WriteStringToFile("1", kOplusFpPressPath);
-        std::this_thread::sleep_for(kHbmSettleDelay);
         sendGoodixTouchIoctl(true);
+        notifyUiReady();
     } else {
+        if (sUiReady.exchange(false)) {
+            ::android::base::WriteStringToFile("0", kOplusFpPressPath);
+        }
         sendGoodixTouchIoctl(false);
-        ::android::base::WriteStringToFile("0", kOplusFpPressPath);
         ::android::base::WriteStringToFile("0", kOplusHbmPath);
     }
 }
@@ -202,6 +212,7 @@ ndk::ScopedAStatus Session::onPointerUp(int32_t /*pointerId*/) {
 }
 
 ndk::ScopedAStatus Session::onUiReady() {
+    notifyUiReady();
     return ndk::ScopedAStatus::ok();
 }
 
