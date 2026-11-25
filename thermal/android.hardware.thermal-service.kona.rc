@@ -1,0 +1,4 @@
+service vendor.thermal-kona /vendor/bin/hw/android.hardware.thermal-service.kona
+    class hal
+    user system
+    group system

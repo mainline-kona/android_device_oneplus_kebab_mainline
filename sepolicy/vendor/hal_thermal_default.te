@@ -1,0 +1,8 @@
+#
+# Copyright (C) 2026 The PenguinOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+r_dir_file(hal_thermal_default, sysfs_thermal)
+allow hal_thermal_default sysfs:dir r_dir_perms;
+allow hal_thermal_default sysfs:lnk_file r_file_perms;

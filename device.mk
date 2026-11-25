@@ -80,6 +80,10 @@ PRODUCT_PACKAGES += \
     android.hardware.gnss-service.kona \
     kona-gnss
 
+# Thermal: AIDL v3 HAL backed by mainline /sys/class/thermal
+PRODUCT_PACKAGES += \
+    android.hardware.thermal-service.kona
+
 # Radio: AIDL v5 RIL (libcuttlefish-rild) + QMI multi-APN data (kona-dataconn)
 # + Open AOSP VoLTE / IMS stack (generic-ims: ImsStack, ImsMedia, Iwlan, QNS, CarrierSettings)
 $(call inherit-product, hardware/lineage/generic-ims/ims.mk)

@@ -27,3 +27,6 @@ genfscon sysfs /kernel/oplus_display	u:object_r:vendor_sysfs_oplus_display:s0
 
 # Goodix UDFPS touchscreen hint procfs node
 genfscon proc /touchpanel	u:object_r:vendor_proc_touchpanel:s0
+
+# Linux thermal framework sysfs (/sys/devices/virtual/thermal)
+genfscon sysfs /devices/virtual/thermal	u:object_r:sysfs_thermal:s0
