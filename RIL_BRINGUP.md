@@ -109,14 +109,15 @@ Captured directly from live hardware (`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1.547
   - `PRODUCT_PACKAGES += libcuttlefish-rild kona-dataconn`
   - Install `android.hardware.telephony.{calling,data,gsm,messaging,radio.access,subscription}.xml` permissions.
 - [x] Add `/vendor/bin/hw/libcuttlefish-rild u:object_r:rild_exec:s0` to `sepolicy/vendor/file_contexts` and drop stale `vendor.qti.iwlan` strings from `rro/FrameworksResTarget`.
-- [x] Patch `reference-ril.c` for SDX55 LTE + 5G SA:
+- [x] Patch `reference-ril.c` & `ril_service.cpp` for SDX55 LTE + 5G SA:
   - Enable `AT+CEREG=2` & `AT+C5GREG=2` on init and handle `+CEREG:`/`+C5GREG:` unsolicited notifications.
-  - Fall back to `AT+C5GREG?` in `requestRegistrationState()` so 5G SA NR Band n78 reports `RADIO_TECH_NR`.
-  - Parse `protocol=` from `kona-dataconn` so `IRadioData` gets exact `IPV6`/`IP`/`IPV4V6` (enabling Android 464XLAT on Jio).
-- [ ] **Phase 2 & 3 Live Test** (after `m vendorimage odmimage`):
-  - [ ] `service list` shows all `android.hardware.radio.*` AIDL services registered.
-  - [ ] `logcat -b radio` shows clean `RILJ` <-> `RILD` handshake, zero crash loops or AT timeouts.
-  - [ ] Status bar displays `Jio` / `4G` (or `5G`) + real signal bars; Settings -> SIM & About Phone show IMEI, SIM operator, signal dBm.
+  - Fix `parseRegistrationState()` to accept `>= 4` commas (`+C5GREG: 2,1,"14","10D288002",11,4,"01.000001"` with 36-bit NR NCI and extended `+CEREG:`) and fall back to `+CEREG?`/`+C5GREG?` for both data & voice on LTE/5G-only networks like Jio.
+  - Add raw `AF_QIPCRTR` **QMI `NAS_GET_SIGNAL_INFO` (`0x004F`)** support in `readSignalStrength()` (verified live: LTE RSRP/RSRQ/RSSI/SNR & 5G NR RSRP/RSRQ/SINR) + fix 10 s `pollSignalStrength()` timer & `INT_MAX` unused-field initialization.
+  - Fix `ril_service.cpp` `convertToPdpProtocolType()` (`strcmp` for `IPV4V6`/`IPV6`/`IP` instead of `strncmp("IP", ..., 2)` which misclassified `IPV6`/`IPV4V6` as IPv4-only!) + add `RADIO_TECH_NR` `V1_5::CellIdentityNr` support.
+- [ ] **Phase 2 & 3 Live Test** (round 1 verified `rild`, all 10 AIDL services, Jio SIM `LOADED`, `carrierId=2018`, real IMEI/ICCID/IMSI/MSISDN, zero `rild` AVCs; round 2 testing `+C5GREG` reg, QMI NAS signal bars, and mobile data after `m vendorimage`):
+  - [x] `service list` shows all `android.hardware.radio.*` AIDL services registered (10/10).
+  - [x] `logcat -b radio` shows clean `RILJ` <-> `RILD` handshake, Jio SIM `LOADED`, IMEI/ICCID/IMSI/MSISDN populated, zero `rild` AVCs.
+  - [ ] Status bar displays `Jio True5G` / `4G` or `5G` + real signal bars; Settings -> SIM & About Phone show signal dBm.
   - [ ] Airplane Mode ON -> OFF cleanly drops and re-registers on network.
 
 ### Phase 3 — Android Mobile Data Integration
