@@ -25,8 +25,8 @@ TARGET_BOOT_HAL := qcom-caf-aidl
 
 TARGET_LIGHT_HAL_SCAN_FOR_BACKLIGHT_DEVICES := true
 
-# Suspend/resume isn't brought up yet: the USB gadget drops and the phone can hang on resume
-TARGET_SUPPORTS_SUSPEND := false
+# Deep sleep (s2idle): fastrpc freezer fix, MHI poll suspend, DWC3 host-connected wakelock
+TARGET_SUPPORTS_SUSPEND := true
 
 # Hardware video codecs: venus (/dev/video0 enc, /dev/video1 dec)
 # through the V4L2 Codec2 HAL, with kebab's own codec list

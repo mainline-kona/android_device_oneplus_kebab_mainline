@@ -62,22 +62,28 @@
 
 ## 3. Committed Locally & Ready to Build/Flash Next (NOT Yet Flashed)
 
-Two `vendor.img`-only changes are pending flash (`8d962cc` + `66b6135` in `hardware/mainline/kona-ril`, plus `vendor.prop` in `device/oneplus/kebab_mainline`):
+Three local commits are ready to build & flash (`boot.img` + `vendor.img`):
 
 1. **`hardware/mainline/kona-ril` (`8d962cc`) — Fix real IMEI/IMEI SV (`17`) & full Baseband version**:
    - Removed Cuttlefish's hardcoded fake `RefRadioModem::getImei()` override (`"867400022047199"` / `"01"`), so `RadioModem::getImei()` delegates directly to our real QMI DMS `requestDeviceIdentity()` (real SDX55 IMEI + IMEI SV **`17`**).
    - Fixed `qmiDmsGetBasebandVersion()` to trim trailing `.build` suffix after `PACK-<n>` when `> 45` chars so Android `GsmCdmaPhone` (`PROP_VALUE_MAX / 2 = 45`) stops front-truncating `"MPSS.HI.2"` — now displays full **`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1`**.
-2. **`hardware/mainline/kona-ril` (`66b6135`) + `device/oneplus/kebab_mainline` (`vendor.prop`) — Enable DSDS (`slot1` + `slot2`) with real dual IMEI/SV & dual UIM slot status**:
+2. **`hardware/mainline/kona-ril` (`66b6135`) + `device/oneplus/kebab_mainline` (`b9b1466`) — Enable DSDS (`slot1` + `slot2`) with real dual IMEI/SV & dual UIM slot status**:
    - Enabled `-DSIM_COUNT=2 -DANDROID_MULTI_SIM` across `libcuttlefish-rild`, `libril-modem-lib`, and `libcuttlefish-ril-2`; declared `slot2` VINTF instances for all 8 per-slot radio HALs in `radio-kona.xml` and set `persist.radio.multisim.config=dsds` in `vendor.prop`.
    - Fixed 4 upstream Cuttlefish `SIM_COUNT >= 2` bugs in `ril_service.cpp` (`osAppIdVec` undeclared, duplicate `IImsMedia/default` registration in loop, duplicate `compat::RadioModem`/`compat::RadioSim` publication, off-by-one `getRadioServiceRwlock(slotId)`).
    - Implemented `qmiDmsGetSerialNumbersForSlot()` (`QMI_DMS_BIND_SUBSCRIPTION 0x0054` primary=1 / secondary=2 + `QMI_DMS_GET_DEVICE_SERIAL_NUMBERS 0x0025` over a single QRTR socket → real IMEI 1 + IMEI 2 + IMEI SV `17`), `qmiUimGetSlotsStatus()` (`QMI_UIM_GET_SLOTS_STATUS 0x0047` TLV `0x10` for both physical slots), and an AT-free `onRequestSlot2()` handler so slot 1 5G/LTE/IMS stays completely isolated.
    - Compile-verified all 11 `kona-ril` translation units cleanly with `-DSIM_COUNT=2 -DANDROID_MULTI_SIM`.
+3. **`mainline-kona` (`1a832994137e`) + `device/oneplus/kebab_mainline` (`device.mk`) — Fix Deep Sleep (`s2idle`)**:
+   - **`drivers/misc/fastrpc.c`**: Replaced `wait_for_completion_interruptible()` with `wait_event_freezable()` (`TASK_INTERRUPTIBLE | TASK_FREEZABLE`) so PM task freezing freezes `hexagonrpcd-sdsp`/`adsp` cleanly in place instead of waking with `-ERESTARTSYS` and crashing SLPI/ADSP (`EX:sensor_process:0x1:frpc_dsp`) + deadlocking `rproc_recovery_wq`.
+   - **`drivers/bus/mhi/host/pci_generic.c`**: Paused/cancelled SDX55's 1-jiffy `poll_work` on `mhi_pci_runtime_suspend()` (restarting before `mhi_pm_resume()`), eliminating the 250 Hz non-freezable timer that blocked `s2idle` / `cluster_sleep_0` and touched PCIe MMIO while suspended, and enabled PCIe PME wakeup on `mhi_oneplus_sdx55_info`.
+   - **`drivers/usb/dwc3/gadget.c`**: Held `pm_stay_awake(dwc->dev)` only while actively enumerated by a USB data host (`conndone`/`wakeup`), relaxing on disconnect, USB bus suspend (`U3`), soft-disconnect, and gadget exit so ADB/MTP never drops while battery & wall-charger states enter deep sleep normally.
+   - **`drivers/clk/qcom/camcc-sm8250.c`**: Added runtime PM (`devm_pm_runtime_enable` / `pm_runtime_resume_and_get` / `pm_runtime_put`) matching `videocc`/`dispcc` so `ad00000.clock-controller` releases its permanent `RPMHPD_MMCX` `low_svs` vote.
+   - **`device/oneplus/kebab_mainline/device.mk`**: Switched `TARGET_SUPPORTS_SUSPEND := true` (removes `/vendor/bin/suspend_blocker`).
 
-**Next Build Command for User (`vendor.img` only!)**:
+**Next Build Command for User (`boot.img` + `vendor.img`)**:
 ```bash
-m vendorimage
+m bootimage vendorimage
 ```
-(then flash `vendor.img`).
+(then flash `boot.img` + `vendor.img`).
 
 ---
 

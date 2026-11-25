@@ -48,8 +48,8 @@ Local fixes ready in `device/oneplus/kebab_mainline`:
   - Phase 2–4: AIDL v5 RIL (`kona-ril`), SIM/Network/Signal, Android Mobile Data, SMS.
   - Phase 5: Open AOSP VoLTE/VoWiFi (`hardware/lineage/generic-ims` + `QMI_SERVICE_UIM` ISIM APDU/AKA).
   - Phase 6: Legacy CS Voice (`q6voice`), Dual-SIM (`slot2`), EFS writeback, SELinux Enforcing.
-- [ ] **Deep Sleep / Suspend & Resume**:
-  - Debug USB gadget drop and hang on resume, then switch `TARGET_SUPPORTS_SUSPEND := true` in `device.mk`.
+- [x] **Deep Sleep / Suspend & Resume** (`1a832994137e` + `TARGET_SUPPORTS_SUSPEND := true`):
+  - Fixed `fastrpc.c` (`wait_event_freezable` so SLPI/ADSP don't crash during task freeze), SDX55 MHI `poll_work` suspend/resume + PME wakeup, DWC3 host-connected wakelock (`pm_stay_awake`/`pm_relax`), and `camcc-sm8250` runtime PM (`MMCX`); switched `TARGET_SUPPORTS_SUSPEND := true` in `device.mk` (pending `boot.img` + `vendor.img` live `AOSD`/`CXSD` verification).
 - [ ] **Camera**:
   - Bring up camera sensors / ISP / HAL.
 - [ ] **SELinux Enforcing**:
