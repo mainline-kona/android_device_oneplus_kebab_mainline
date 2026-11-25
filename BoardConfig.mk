@@ -38,7 +38,7 @@ BOARD_KERNEL_BASE := 0x00000000
 BOARD_KERNEL_PAGESIZE := 4096
 BOARD_RAMDISK_USE_LZ4 := true
 BOARD_KERNEL_CMDLINE := \
-    ignore_loglevel panic=3 oops=panic androidboot.selinux=permissive printk.always_kmsg_dump=1 printk.devkmsg=on \
+    console=tty0 ignore_loglevel panic=3 oops=panic androidboot.selinux=permissive printk.always_kmsg_dump=1 printk.devkmsg=on \
     clk_ignore_unused pd_ignore_unused regulator_ignore_unused \
     arm-smmu.disable_bypass=0 swiotlb=2048 \
     service_locator.enable=1 \
