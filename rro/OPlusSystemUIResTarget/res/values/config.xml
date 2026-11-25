@@ -9,4 +9,7 @@
 
     <!-- Xiaomi Madrid style-E halo/ripple UDFPS effect, using the real 24-frame animation. -->
     <bool name="config_udfpsMadridHaloRipple">true</bool>
+
+    <!-- OnePlus 8T factory-calibrated warm-white optical illumination color for Goodix gfp9638 -->
+    <color name="config_udfpsColor">#ffffe6</color>
 </resources>

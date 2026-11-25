@@ -37,6 +37,8 @@ constexpr char kGoodixDevPath[] = "/dev/goodix_fp";
 
 std::atomic<bool> sFingerDown{false};
 std::atomic<bool> sUiReady{false};
+std::atomic<bool> sEnrolling{false};
+std::atomic<uint64_t> sTouchSeq{0};
 
 void sendGoodixTouchIoctl(bool down) {
     int fd = open(kGoodixDevPath, O_RDWR | O_CLOEXEC);
@@ -50,6 +52,26 @@ void sendGoodixTouchIoctl(bool down) {
               down ? "TOUCHDOWN" : "TOUCHUP", strerror(errno));
     }
     close(fd);
+}
+
+void disableHbmAsync() {
+    std::thread([]() {
+        if (!sFingerDown.load() && !sEnrolling.load()) {
+            ::android::base::WriteStringToFile("0", kOplusFpPressPath);
+            ::android::base::WriteStringToFile("0", kOplusHbmPath);
+        }
+    }).detach();
+}
+
+void setEnrollHbm(bool enable) {
+    bool prev = sEnrolling.exchange(enable);
+    if (enable) {
+        if (!prev) {
+            ::android::base::WriteStringToFile("1", kOplusHbmPath);
+        }
+    } else if (prev && !sFingerDown.load()) {
+        disableHbmAsync();
+    }
 }
 
 void notifyUiReady() {
@@ -69,15 +91,31 @@ void setFingerDown(bool down) {
 
     if (down) {
         sUiReady.store(false);
-        ::android::base::WriteStringToFile("1", kOplusHbmPath);
-        sendGoodixTouchIoctl(true);
-        notifyUiReady();
-    } else {
-        if (sUiReady.exchange(false)) {
-            ::android::base::WriteStringToFile("0", kOplusFpPressPath);
+        /*
+         * Enable HBM and notify Goodix TOUCHDOWN immediately on pointer down
+         * so panel HBM settles in parallel with SystemUI presenting the UDFPS
+         * illumination circle. Goodix capture (GF_NET_EVENT_UI_READY) waits
+         * for onUiReady() so frame #1 is never taken on a dark/unlit dot.
+         */
+        if (!sEnrolling.load()) {
+            ::android::base::WriteStringToFile("1", kOplusHbmPath);
         }
+        sendGoodixTouchIoctl(true);
+        /* Fallback if a caller never invokes onUiReady() after onPointerDown() */
+        uint64_t seq = ++sTouchSeq;
+        std::thread([seq]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(60));
+            if (sTouchSeq.load() == seq && sFingerDown.load() && !sUiReady.load()) {
+                notifyUiReady();
+            }
+        }).detach();
+    } else {
+        ++sTouchSeq;
+        bool hadUiReady = sUiReady.exchange(false);
         sendGoodixTouchIoctl(false);
-        ::android::base::WriteStringToFile("0", kOplusHbmPath);
+        if (!sEnrolling.load() && (hadUiReady || prev)) {
+            disableHbmAsync();
+        }
     }
 }
 
@@ -111,6 +149,7 @@ ndk::ScopedAStatus Session::generateChallenge() {
 ndk::ScopedAStatus Session::revokeChallenge(int64_t challenge) {
     ALOGI("revokeChallenge: %ld", challenge);
     setFingerDown(false);
+    setEnrollHbm(false);
     mDevice->post_enroll(mDevice);
     mCb->onChallengeRevoked(challenge);
 
@@ -121,9 +160,11 @@ ndk::ScopedAStatus Session::enroll(const HardwareAuthToken& hat,
                                    std::shared_ptr<ICancellationSignal>* out) {
     hw_auth_token_t authToken{};
     translate(hat, authToken);
+    setEnrollHbm(true);
     int error = mDevice->enroll(mDevice, &authToken, mUserId, 60);
     if (error) {
         ALOGE("enroll failed: %d", error);
+        setEnrollHbm(false);
         mCb->onError(Error::UNABLE_TO_PROCESS, error);
     }
 
@@ -282,6 +323,7 @@ ndk::ScopedAStatus Session::setIgnoreDisplayTouches(bool /*shouldIgnore*/) {
 
 ndk::ScopedAStatus Session::cancel() {
     setFingerDown(false);
+    setEnrollHbm(false);
     int ret = mDevice->cancel(mDevice);
 
     if (ret == 0) {
@@ -294,6 +336,7 @@ ndk::ScopedAStatus Session::cancel() {
 
 ndk::ScopedAStatus Session::close() {
     setFingerDown(false);
+    setEnrollHbm(false);
     mClosed = true;
     mCb->onSessionClosed();
     AIBinder_DeathRecipient_delete(mDeathRecipient);
@@ -412,6 +455,7 @@ void Session::notify(const fingerprint_msg_t* msg) {
             ALOGD("onError(%hhd, %d)", result, vendorCode);
             mCb->onError(result, vendorCode);
             setFingerDown(false);
+            setEnrollHbm(false);
         } break;
         case FINGERPRINT_ACQUIRED: {
             int32_t vendorCode = 0;
@@ -431,6 +475,7 @@ void Session::notify(const fingerprint_msg_t* msg) {
                                       msg->data.enroll.samples_remaining);
             if (msg->data.enroll.samples_remaining == 0) {
                 setFingerDown(false);
+                setEnrollHbm(false);
             }
         } break;
         case FINGERPRINT_TEMPLATE_REMOVED: {
