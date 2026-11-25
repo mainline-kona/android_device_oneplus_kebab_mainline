@@ -1,0 +1,2 @@
+allow tqftpserv firmware_mnt_file:dir r_dir_perms;
+allow tqftpserv firmware_mnt_file:file r_file_perms;

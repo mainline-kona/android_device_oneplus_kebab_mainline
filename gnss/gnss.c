@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define QMI_LOC_REG_EVENTS 0x0021
 #define LOC_EVENT_MASK_POSITION_REPORT 0x1
@@ -162,7 +163,10 @@ int main(void) {
         g_autoptr(QmiMessageLocSetNmeaTypesInput) in = qmi_message_loc_set_nmea_types_input_new();
         qmi_message_loc_set_nmea_types_input_set_nmea_types(
                 in, QMI_LOC_NMEA_TYPE_GGA | QMI_LOC_NMEA_TYPE_RMC | QMI_LOC_NMEA_TYPE_GSV |
-                            QMI_LOC_NMEA_TYPE_GSA | QMI_LOC_NMEA_TYPE_VTG,
+                            QMI_LOC_NMEA_TYPE_GSA | QMI_LOC_NMEA_TYPE_VTG |
+                            QMI_LOC_NMEA_TYPE_GLGSV | QMI_LOC_NMEA_TYPE_GAGSV |
+                            QMI_LOC_NMEA_TYPE_GBGSV | QMI_LOC_NMEA_TYPE_GQGSV |
+                            QMI_LOC_NMEA_TYPE_GNGSA,
                 NULL);
         qmi_client_loc_set_nmea_types(QMI_CLIENT_LOC(loc), in, 10, NULL, on_done, &w);
         g_autoptr(QmiMessageLocSetNmeaTypesOutput) out =
@@ -171,6 +175,24 @@ int main(void) {
         if (!out || !qmi_message_loc_set_nmea_types_output_get_result(out, &error)) {
             printf("warning=set nmea types: %s\n", error ? error->message : "unknown");
             g_clear_error(&error);
+        }
+    }
+    /* Inject current system UTC time to speed up cold-start TTFF and immediate NMEA */
+    {
+        struct timespec ts;
+        if (clock_gettime(CLOCK_REALTIME, &ts) == 0 && ts.tv_sec > 1577836800LL) {
+            guint64 utc_ms = (guint64)ts.tv_sec * 1000ULL + (guint64)ts.tv_nsec / 1000000ULL;
+            g_autoptr(QmiMessageLocInjectUtcTimeInput) in =
+                    qmi_message_loc_inject_utc_time_input_new();
+            qmi_message_loc_inject_utc_time_input_set_utc_time(in, utc_ms, NULL);
+            qmi_message_loc_inject_utc_time_input_set_time_uncertainty(in, 5000, NULL);
+            qmi_client_loc_inject_utc_time(QMI_CLIENT_LOC(loc), in, 10, NULL, on_done, &w);
+            g_autoptr(QmiMessageLocInjectUtcTimeOutput) out =
+                    qmi_client_loc_inject_utc_time_finish(QMI_CLIENT_LOC(loc), wait_result(&w),
+                                                          &error);
+            if (!out || !qmi_message_loc_inject_utc_time_output_get_result(out, &error)) {
+                g_clear_error(&error);
+            }
         }
     }
 
@@ -197,5 +219,19 @@ int main(void) {
     g_unix_signal_add(SIGTERM, on_sigterm, w.loop);
     g_unix_signal_add(SIGINT, on_sigterm, w.loop);
     g_main_loop_run(w.loop);
+
+    /* Stop session and release CID cleanly on exit */
+    {
+        g_autoptr(QmiMessageLocStopInput) in = qmi_message_loc_stop_input_new();
+        qmi_message_loc_stop_input_set_session_id(in, 1, NULL);
+        qmi_client_loc_stop(QMI_CLIENT_LOC(loc), in, 5, NULL, on_done, &w);
+        g_autoptr(QmiMessageLocStopOutput) out =
+                qmi_client_loc_stop_finish(QMI_CLIENT_LOC(loc), wait_result(&w), &error);
+        g_clear_error(&error);
+    }
+    qmi_device_release_client(dev, loc, QMI_DEVICE_RELEASE_CLIENT_FLAGS_RELEASE_CID, 5, NULL,
+                              on_done, &w);
+    qmi_device_release_client_finish(dev, wait_result(&w), &error);
+    g_clear_error(&error);
     return 0;
 }
