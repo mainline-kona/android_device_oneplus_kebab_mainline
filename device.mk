@@ -135,10 +135,6 @@ PRODUCT_COPY_FILES += \
     $(FIRMWARE_PATH)/qca/htnv20.bin:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/qca/htnv20.bin \
     $(FIRMWARE_PATH)/qca/htbtfw20.tlv:$(TARGET_COPY_OUT_VENDOR)/firmware/qca/htbtfw20.tlv \
     $(FIRMWARE_PATH)/qca/htnv20.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/qca/htnv20.bin \
-    $(FIRMWARE_PATH)/qcom/q6voice-cal.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/qcom/q6voice-cal.bin \
-    $(FIRMWARE_PATH)/qcom/q6voice-vol-cal.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/qcom/q6voice-vol-cal.bin \
-    $(FIRMWARE_PATH)/qcom/q6voice-devcfg.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/qcom/q6voice-devcfg.bin \
-    $(FIRMWARE_PATH)/qcom/q6voice-topologies.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/qcom/q6voice-topologies.bin \
     $(FIRMWARE_PATH)/qcom/a650_sqe.fw:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/qcom/a650_sqe.fw \
     $(FIRMWARE_PATH)/qcom/a650_gmu.bin:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/qcom/a650_gmu.bin \
     $(FIRMWARE_PATH)/qcom/a650_sqe.fw:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/firmware/qcom/a650_sqe.fw \
@@ -153,12 +149,6 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_SYSTEM_PROPERTIES += \
     ro.adb.secure=0
-
-# Mainline kernels have no /dev/ashmem (removed in 5.18). libcutils only uses
-# memfd for apps targeting SDK >= 37 unless forced, so older apps (SetupWizard,
-# ASI, CursorWindow users) crash in Bitmap_copyAshmem without this.
-PRODUCT_SYSTEM_PROPERTIES += \
-    sys.use_memfd=true
 
 PRODUCT_PRODUCT_PROPERTIES += \
     ro.adb.secure=0
@@ -192,6 +182,9 @@ $(call inherit-product-if-exists, hardware/samsung-ext/interfaces/debug-tools/de
 
 PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
 
+# SELinux denial collector (userdebug/eng)
+TARGET_ENABLE_SELOGGER := true
+
 # Overlays
 PRODUCT_PACKAGES += \
     KebabMainlineFrameworksResTarget \
@@ -200,38 +193,7 @@ PRODUCT_PACKAGES += \
     KebabMainlineOPlusSettingsProviderResTarget \
     KebabMainlineOPlusSettingsResTarget \
     KebabMainlineOPlusSystemUIResTarget \
-    KebabMainlineTelephonyResTarget \
     KebabMainlineWifiResTarget
-
-# Radio: Cuttlefish AIDL RIL (libcuttlefish-rild) + kona-dataconn + kona-voicecall
-PRODUCT_PACKAGES += \
-    kona-dataconn \
-    kona-voicecall \
-    libcuttlefish-rild
-
-# libqmi/libqrtr runtime for kona-dataconn
-PRODUCT_PACKAGES += \
-    libqmi-glib \
-    libqrtr-glib \
-    libglib-2.0 \
-    libgio-2.0 \
-    libgobject-2.0
-
-# Lineage framework bits: the Lineage-patched framework reads
-# LineageSettings during system_server start (KeyGestureController), so
-# the provider must be present or boot loops. Shipped unconditionally
-# because LINEAGE_BUILD is not "true" in this product config.
-PRODUCT_PACKAGES += \
-    LineageSettingsProvider \
-    LineageParts
-
-PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.telephony.calling.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.calling.xml \
-    frameworks/native/data/etc/android.hardware.telephony.data.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.data.xml \
-    frameworks/native/data/etc/android.hardware.telephony.gsm.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.gsm.xml \
-    frameworks/native/data/etc/android.hardware.telephony.messaging.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.messaging.xml \
-    frameworks/native/data/etc/android.hardware.telephony.radio.access.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.radio.access.xml \
-    frameworks/native/data/etc/android.hardware.telephony.subscription.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.subscription.xml
 
 # Scoped storage
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
@@ -239,12 +201,8 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
 # Shipping API level
 TARGET_FOLLOWS_LATEST_SHIPPING_API_LEVEL := true
 
-# Open IMS stack (AOSP ImsStack + overlays, package com.android.imsstack)
-$(call inherit-product, hardware/lineage/generic-ims/ims.mk)
-
 # Soong namespaces
 PRODUCT_SOONG_NAMESPACES += \
     $(DEVICE_PATH) \
     hardware/mainline/common \
-    hardware/mainline/kona-ril \
     external/mainline-hw-deps

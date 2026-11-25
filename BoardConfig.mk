@@ -4,7 +4,6 @@
 #
 
 DEVICE_PATH := device/oneplus/kebab_mainline
-TARGET_KERNEL_DIR ?= device/oneplus/kebab_mainline-kernel
 
 TARGET_INITIAL_BRINGUP := true
 TARGET_BOARD_PLATFORM := qcom
@@ -56,15 +55,16 @@ BOARD_BOOTCONFIG := \
 
 BOARD_RECOVERY_KERNEL_CMDLINE := androidboot.bootmode=recovery
 
+# Kernel (ACK 6.18 LTS inline build with gki_defconfig + kebab-android.config)
+TARGET_KERNEL_SOURCE := kernel/oneplus/sm8250
+TARGET_KERNEL_CONFIG := gki_defconfig kebab-android.config
+BOARD_KERNEL_IMAGE_NAME := Image
+TARGET_KERNEL_DTB := qcom/sm8250-oneplus-kebab.dtb
+
 # DTB / DTBO
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
-BOARD_PREBUILT_DTBIMAGE_DIR := $(TARGET_KERNEL_DIR)/dtb
-BOARD_PREBUILT_DTBOIMAGE := $(TARGET_KERNEL_DIR)/dtbo.img
+BOARD_PREBUILT_DTBOIMAGE := $(DEVICE_PATH)/prebuilt/dtbo.img
 BOARD_DTBOIMG_PARTITION_SIZE := 25165824
-
-# Kernel
-TARGET_PREBUILT_KERNEL := $(TARGET_KERNEL_DIR)/Image
-TARGET_KERNEL_MIXED_MODE := false
 
 # Partitions - A/B
 AB_OTA_UPDATER := true
