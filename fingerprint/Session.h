@@ -10,6 +10,8 @@
 #include <aidl/android/hardware/biometrics/fingerprint/BnSession.h>
 #include <aidl/android/hardware/biometrics/fingerprint/ISessionCallback.h>
 #include <android/log.h>
+#include <condition_variable>
+#include <mutex>
 #include "fingerprint.h"
 #include <hardware/hardware.h>
 #include <log/log.h>
@@ -79,7 +81,9 @@ class Session : public BnSession {
 
     bool mIsLockoutTimerStarted = false;
     bool mIsLockoutTimerAborted = false;
-    bool mEnumerateNotified = false;
+    std::mutex mEnumerateMutex;
+    std::condition_variable mEnumerateCv;
+    bool mEnumerateDone = false;
     std::vector<int32_t> mEnrollments;
 
     int32_t mUserId;

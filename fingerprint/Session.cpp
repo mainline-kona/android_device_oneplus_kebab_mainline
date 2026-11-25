@@ -153,14 +153,39 @@ ndk::ScopedAStatus Session::detectInteraction(std::shared_ptr<ICancellationSigna
 }
 
 ndk::ScopedAStatus Session::enumerateEnrollments() {
-    mEnumerateNotified = false;
-    mEnrollments.clear();
+    {
+        std::lock_guard<std::mutex> lock(mEnumerateMutex);
+        mEnumerateDone = false;
+        mEnrollments.clear();
+    }
     int error = mDevice->enumerate(mDevice);
     if (error) {
         ALOGE("enumerate failed: %d", error);
     }
-    if (!mEnumerateNotified) {
-        ALOGI("enumerate returned synchronously with no templates; notifying empty list");
+
+    /*
+     * Goodix processes set_active_group() and enumerate() asynchronously on its
+     * EventCenter thread. Wait for FINGERPRINT_TEMPLATE_ENUMERATING (remaining==0)
+     * before assuming 0 templates exist; otherwise firing an empty list early
+     * causes FingerprintService to purge valid enrolled fingerprints as dangling.
+     */
+    bool timedOut = false;
+    {
+        std::unique_lock<std::mutex> lock(mEnumerateMutex);
+        if (error != 0) {
+            timedOut = !mEnumerateDone;
+            mEnumerateDone = true;
+        } else {
+            bool done = mEnumerateCv.wait_for(lock, std::chrono::milliseconds(1500),
+                                              [this]() { return mEnumerateDone; });
+            if (!done) {
+                timedOut = true;
+                mEnumerateDone = true;
+            }
+        }
+    }
+    if (timedOut) {
+        ALOGI("enumerate produced no templates within timeout; notifying empty list");
         mCb->onEnrollmentsEnumerated({});
     }
 
@@ -435,13 +460,24 @@ void Session::notify(const fingerprint_msg_t* msg) {
         case FINGERPRINT_TEMPLATE_ENUMERATING: {
             ALOGD("onEnumerate(fid=%d, gid=%d, rem=%d)", msg->data.enumerated.finger.fid,
                   msg->data.enumerated.finger.gid, msg->data.enumerated.remaining_templates);
-            mEnumerateNotified = true;
-            if (msg->data.enumerated.finger.fid != 0) {
-                mEnrollments.push_back(msg->data.enumerated.finger.fid);
+            std::vector<int32_t> completed;
+            bool shouldNotify = false;
+            {
+                std::lock_guard<std::mutex> lock(mEnumerateMutex);
+                if (!mEnumerateDone) {
+                    if (msg->data.enumerated.finger.fid != 0) {
+                        mEnrollments.push_back(msg->data.enumerated.finger.fid);
+                    }
+                    if (msg->data.enumerated.remaining_templates == 0) {
+                        completed.swap(mEnrollments);
+                        mEnumerateDone = true;
+                        shouldNotify = true;
+                    }
+                }
             }
-            if (msg->data.enumerated.remaining_templates == 0) {
-                mCb->onEnrollmentsEnumerated(mEnrollments);
-                mEnrollments.clear();
+            if (shouldNotify) {
+                mCb->onEnrollmentsEnumerated(completed);
+                mEnumerateCv.notify_all();
             }
         } break;
     }
