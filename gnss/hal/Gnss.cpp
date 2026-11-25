@@ -167,12 +167,15 @@ bool Gnss::startHelper() {
     ::close(fds[1]);
     mHelperPid = pid;
     mHelperFd = fds[0];
+    ALOGI("startHelper: spawned %s --interval %s (pid=%d)", kHelperPath, intervalArg.c_str(),
+          (int)pid);
     return true;
 }
 
 void Gnss::stopHelper() {
     std::lock_guard<std::mutex> lock(mHelperMutex);
     if (mHelperPid > 0) {
+        ALOGI("stopHelper: stopping %s (pid=%d)", kHelperPath, (int)mHelperPid);
         kill(mHelperPid, SIGTERM);
         waitpid(mHelperPid, nullptr, 0);
         mHelperPid = -1;
@@ -259,6 +262,10 @@ void Gnss::readHelper() {
             ALOGE("kona-gnss: %s", line.c_str());
         } else if (line.rfind("warning=", 0) == 0) {
             ALOGW("kona-gnss: %s", line.c_str());
+        } else if (line.rfind("info=", 0) == 0) {
+            ALOGI("kona-gnss: %s", line.c_str());
+        } else if (line == "started") {
+            ALOGI("kona-gnss: session started");
         } else if (line.rfind("pos ", 0) == 0) {
             handlePosition(line);
         } else if (!line.empty() && line[0] == '$') {
@@ -335,7 +342,14 @@ static double carrierOf(GnssConstellationType c, int signalId) {
 
 void Gnss::flushSvStatus() {
     if (!mSvs.empty()) {
+        int withCn0 = 0;
+        int usedCount = 0;
+        float maxCn0 = 0.0f;
         for (auto& sv : mSvs) {
+            if (sv.cN0Dbhz > 0.0f) {
+                withCn0++;
+                if (sv.cN0Dbhz > maxCn0) maxCn0 = sv.cN0Dbhz;
+            }
             bool used = std::any_of(mUsedSvs.begin(), mUsedSvs.end(), [&sv](const auto& entry) {
                 if (entry.second != sv.svid) return false;
                 return entry.first == GnssConstellationType::UNKNOWN ||
@@ -343,8 +357,11 @@ void Gnss::flushSvStatus() {
             });
             if (used) {
                 sv.svFlag |= (int)IGnssCallback::GnssSvFlags::USED_IN_FIX;
+                usedCount++;
             }
         }
+        ALOGD("flushSvStatus: svs=%zu withCn0=%d maxCn0=%.1f usedInFix=%d active=%d", mSvs.size(),
+              withCn0, maxCn0, usedCount, (int)mIsSvStatusActive.load());
         if (mIsSvStatusActive) reportSvStatus(filterBlocklistedSatellites(mSvs));
         mSvs.clear();
     }
@@ -366,16 +383,28 @@ void Gnss::handlePosition(const std::string& line) {
                         "speed=%lf sacc=%lf bearing=%lf bacc=%lf utc=%" SCNu64,
                         &status, &flags, &lat, &lon, &alt, &hacc, &vacc, &speed, &sacc, &bearing,
                         &bacc, &utcMs);
-    if (parsed != 12) return;
+    if (parsed != 12) {
+        ALOGW("handlePosition: malformed line (%d fields): %s", parsed, line.c_str());
+        return;
+    }
 
     // status == 0 is QMI_LOC_SESSION_STATUS_SUCCESS (final GNSS fix for this epoch).
     // status == 1 (IN_PROGRESS) carries coarse/intermediate cell-based estimates and must not
     // be reported as a GNSS fix.
-    if (status != 0) return;
-    if (!(flags & GnssLocation::HAS_LAT_LONG)) return;
-    if (!std::isfinite(lat) || !std::isfinite(lon)) return;
-    if (lat < -90.0 || lat > 90.0 || lon < -180.0 || lon > 180.0) return;
-    if (lat == 0.0 && lon == 0.0) return;
+    if (status != 0) {
+        ALOGD("handlePosition: skip status=%d flags=0x%x lat=%.6f lon=%.6f hacc=%.1fm utc=%" PRIu64,
+              status, flags, lat, lon, hacc, utcMs);
+        return;
+    }
+    if (!(flags & GnssLocation::HAS_LAT_LONG)) {
+        ALOGW("handlePosition: skip status=0 missing HAS_LAT_LONG (flags=0x%x)", flags);
+        return;
+    }
+    if (!std::isfinite(lat) || !std::isfinite(lon) || lat < -90.0 || lat > 90.0 || lon < -180.0 ||
+        lon > 180.0 || (lat == 0.0 && lon == 0.0)) {
+        ALOGW("handlePosition: skip invalid coords lat=%.8f lon=%.8f", lat, lon);
+        return;
+    }
 
     GnssLocation loc = {};
     int outFlags = GnssLocation::HAS_LAT_LONG;
@@ -438,6 +467,11 @@ void Gnss::handlePosition(const std::string& line) {
     loc.elapsedRealtime.timestampNs = ::android::elapsedRealtimeNano();
     loc.elapsedRealtime.timeUncertaintyNs = 1000000.0;
 
+    ALOGI("handlePosition: FIX lat=%.7f lon=%.7f alt=%.1f hacc=%.1fm speed=%.2f flags=0x%x "
+          "utc=%" PRId64,
+          loc.latitudeDegrees, loc.longitudeDegrees, loc.altitudeMeters,
+          loc.horizontalAccuracyMeters, loc.speedMetersPerSec, loc.gnssLocationFlags,
+          loc.timestampMillis);
     reportLocation(loc);
     mReportedLocationCount += 1;
     mFirstFixReceived = true;
@@ -448,6 +482,9 @@ void Gnss::handleSentence(const std::string& line) {
     if (line.size() < 7) return;
     std::string talker = line.substr(1, 2);
     std::string type = line.substr(3, 3);
+    if (type == "GGA" || type == "RMC" || type == "GSA") {
+        ALOGV("nmea: %s", line.c_str());
+    }
     std::vector<std::string> f = splitFields(line);
 
     if (type == "GSA") {

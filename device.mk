@@ -287,7 +287,12 @@ PRODUCT_COPY_FILES += \
     $(FIRMWARE_PATH)/adb_keys:$(TARGET_COPY_OUT_PRODUCT)/etc/security/adbd_keys
 
 PRODUCT_SYSTEM_PROPERTIES += \
-    ro.adb.secure=0
+    ro.adb.secure=0 \
+    log.tag.GnssAidl=V \
+    log.tag.GnssPsdsAidl=V \
+    log.tag.AGnssAidl=V \
+    log.tag.GnssLocationProvider=V \
+    log.tag.GnssPsdsDownloader=V
 
 PRODUCT_PRODUCT_PROPERTIES += \
     ro.adb.secure=0

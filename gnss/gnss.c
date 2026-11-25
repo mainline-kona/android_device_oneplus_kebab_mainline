@@ -8,6 +8,7 @@
  *
  * Modes:
  *   kona-gnss [--interval <ms>]            Stream NMEA + structured QMI pos reports until SIGTERM
+ *   kona-gnss --diag                       Query QMI LOC engine/XTRA/mode diagnostics and exit
  *   kona-gnss --inject-xtra <file|->       Inject XTRA3 predicted orbits (0x00A7, fallback 0x0035)
  *   kona-gnss --inject-time <ms> <unc_ms>  Inject UTC time (0x0038)
  *   kona-gnss --inject-pos <lat> <lon> <acc> Inject coarse position (0x0039)
@@ -26,9 +27,15 @@
 
 #define QMI_LOC_REG_EVENTS 0x0021
 #define QMI_LOC_CONFIG_CONSTELLATION_MULTI_BAND 0x00E0
-#define LOC_EVENT_MASK_POSITION_REPORT 0x1
-#define LOC_EVENT_MASK_GNSS_SV_INFO 0x2
-#define LOC_EVENT_MASK_NMEA 0x4
+#define LOC_EVENT_MASK_DIAG                                                             \
+    ((guint64)QMI_LOC_EVENT_REGISTRATION_FLAG_POSITION_REPORT |                         \
+     (guint64)QMI_LOC_EVENT_REGISTRATION_FLAG_GNSS_SATELLITE_INFO |                     \
+     (guint64)QMI_LOC_EVENT_REGISTRATION_FLAG_NMEA |                                    \
+     (guint64)QMI_LOC_EVENT_REGISTRATION_FLAG_INJECT_TIME_REQUEST |                     \
+     (guint64)QMI_LOC_EVENT_REGISTRATION_FLAG_INJECT_PREDICTED_ORBITS_REQUEST |         \
+     (guint64)QMI_LOC_EVENT_REGISTRATION_FLAG_INJECT_POSITION_REQUEST |                 \
+     (guint64)QMI_LOC_EVENT_REGISTRATION_FLAG_ENGINE_STATE |                            \
+     (guint64)QMI_LOC_EVENT_REGISTRATION_FLAG_FIX_SESSION_STATE)
 #define LOC_CLIENT_TYPE_AFW 1
 
 #define XTRA_CHUNK_SIZE 1024
@@ -105,10 +112,7 @@ static void register_events(QmiDevice *dev, QmiClient *loc, Wait *w) {
     g_autoptr(QmiMessage) msg =
             qmi_message_new(QMI_SERVICE_LOC, qmi_client_get_cid(loc), 0, QMI_LOC_REG_EVENTS);
     gsize tlv = qmi_message_tlv_write_init(msg, 0x01, NULL);
-    qmi_message_tlv_write_guint64(msg, QMI_ENDIAN_LITTLE,
-                                  LOC_EVENT_MASK_POSITION_REPORT | LOC_EVENT_MASK_GNSS_SV_INFO |
-                                          LOC_EVENT_MASK_NMEA,
-                                  NULL);
+    qmi_message_tlv_write_guint64(msg, QMI_ENDIAN_LITTLE, LOC_EVENT_MASK_DIAG, NULL);
     qmi_message_tlv_write_complete(msg, tlv, NULL);
     tlv = qmi_message_tlv_write_init(msg, 0x10, NULL);
     qmi_message_tlv_write_string(msg, 0, "HAL", -1, NULL);
@@ -154,7 +158,149 @@ static void enable_multiband(QmiDevice *dev, QmiClient *loc, Wait *w) {
     if (!resp) {
         printf("warning=config multiband: %s\n", error ? error->message : "unknown");
         g_clear_error(&error);
+    } else {
+        gsize init = qmi_message_tlv_read_init(resp, 0x02, NULL, NULL);
+        gsize off = 0;
+        guint16 st = 1, code = 0;
+        if (init &&
+            qmi_message_tlv_read_guint16(resp, init, &off, QMI_ENDIAN_LITTLE, &st, NULL) &&
+            qmi_message_tlv_read_guint16(resp, init, &off, QMI_ENDIAN_LITTLE, &code, NULL)) {
+            printf("info=multiband status=%u code=%u\n", st, code);
+        }
     }
+    fflush(stdout);
+}
+
+static char sv_sys_char(QmiLocSystem sys) {
+    switch (sys) {
+        case QMI_LOC_SYSTEM_GPS:
+            return 'G';
+        case QMI_LOC_SYSTEM_GLONASS:
+            return 'R';
+        case QMI_LOC_SYSTEM_GALILEO:
+            return 'E';
+        case QMI_LOC_SYSTEM_COMPASS:
+            return 'C';
+        case QMI_LOC_SYSTEM_SBAS:
+            return 'S';
+        default:
+            return '?';
+    }
+}
+
+static void on_gnss_sv_info(QmiClientLoc *loc, QmiIndicationLocGnssSvInfoOutput *ind,
+                            gpointer data) {
+    GArray *list = NULL;
+    gboolean alt_assumed = FALSE;
+    gboolean has_alt_assumed =
+            qmi_indication_loc_gnss_sv_info_output_get_altitude_assumed(ind, &alt_assumed, NULL);
+    if (!qmi_indication_loc_gnss_sv_info_output_get_list(ind, &list, NULL) || !list) {
+        printf("info=sv total=0 alt_assumed=%d\n", has_alt_assumed ? (int)alt_assumed : -1);
+        fflush(stdout);
+        return;
+    }
+
+    guint idle = 0, searching = 0, tracking = 0, snr_cnt = 0, eph_cnt = 0, alm_cnt = 0;
+    gfloat max_snr = 0.0f;
+    char detail[512];
+    size_t dpos = 0;
+    detail[0] = '\0';
+
+    for (guint i = 0; i < list->len; i++) {
+        const QmiIndicationLocGnssSvInfoOutputListElement *e =
+                &g_array_index(list, QmiIndicationLocGnssSvInfoOutputListElement, i);
+        gboolean has_status =
+                (e->valid_information & QMI_LOC_SATELLITE_VALID_INFORMATION_PROCESS_STATUS) != 0;
+        gboolean has_snr =
+                (e->valid_information & QMI_LOC_SATELLITE_VALID_INFORMATION_SIGNAL_TO_NOISE_RATIO) !=
+                0;
+        gboolean has_nav =
+                (e->valid_information & QMI_LOC_SATELLITE_VALID_INFORMATION_SATELLITE_INFO_MASK) !=
+                0;
+        if (has_status) {
+            if (e->satellite_status == QMI_LOC_SATELLITE_STATUS_TRACKING)
+                tracking++;
+            else if (e->satellite_status == QMI_LOC_SATELLITE_STATUS_SEARCHING)
+                searching++;
+            else
+                idle++;
+        }
+        if (has_nav) {
+            /* QMI_LOC nav mask: bit 0 = ephemeris, bit 1 = almanac */
+            if (((guint32)e->navigation_data) & 0x1u) eph_cnt++;
+            if (((guint32)e->navigation_data) & 0x2u) alm_cnt++;
+        }
+        gfloat snr = (has_snr && isfinite(e->signal_to_noise_ratio_bhz))
+                             ? e->signal_to_noise_ratio_bhz
+                             : 0.0f;
+        if (snr > 0.0f) {
+            snr_cnt++;
+            if (snr > max_snr) max_snr = snr;
+        }
+        if ((snr > 0.0f || (has_status && e->satellite_status == QMI_LOC_SATELLITE_STATUS_TRACKING)) &&
+            dpos + 32 < sizeof(detail)) {
+            int n = snprintf(detail + dpos, sizeof(detail) - dpos, "%s%c%u:%.1f/%c%c/%c",
+                             dpos ? "," : "", sv_sys_char(e->system), (unsigned)e->gnss_satellite_id,
+                             snr, (has_nav && (((guint32)e->navigation_data) & 0x1u)) ? 'E' : '-',
+                             (has_nav && (((guint32)e->navigation_data) & 0x2u)) ? 'A' : '-',
+                             has_status ? (e->satellite_status == QMI_LOC_SATELLITE_STATUS_TRACKING
+                                                   ? 'T'
+                                                   : (e->satellite_status ==
+                                                                      QMI_LOC_SATELLITE_STATUS_SEARCHING
+                                                              ? 'S'
+                                                              : 'I'))
+                                        : '?');
+            if (n > 0) dpos += (size_t)n;
+        }
+    }
+
+    printf("info=sv total=%u track=%u search=%u idle=%u snr_cnt=%u max_snr=%.1f eph=%u alm=%u "
+           "alt_assumed=%d%s%s\n",
+           list->len, tracking, searching, idle, snr_cnt, max_snr, eph_cnt, alm_cnt,
+           has_alt_assumed ? (int)alt_assumed : -1, dpos ? " active=" : "", detail);
+    fflush(stdout);
+}
+
+static void on_engine_state(QmiClientLoc *loc, QmiIndicationLocEngineStateOutput *ind,
+                            gpointer data) {
+    QmiLocEngineState st = QMI_LOC_ENGINE_STATE_OFF;
+    qmi_indication_loc_engine_state_output_get_engine_state(ind, &st, NULL);
+    printf("info=engine_state=%d (%s)\n", (int)st,
+           st == QMI_LOC_ENGINE_STATE_ON ? "ON" : "OFF");
+    fflush(stdout);
+}
+
+static void on_inject_time_req(QmiClientLoc *loc, QmiIndicationLocInjectTimeRequestOutput *ind,
+                               gpointer data) {
+    guint32 delay = 0;
+    GArray *servers = NULL;
+    qmi_indication_loc_inject_time_request_output_get_time_server_info(ind, &delay, &servers, NULL);
+    printf("info=req_inject_time delay_ms=%u servers=%u\n", delay, servers ? servers->len : 0u);
+    fflush(stdout);
+}
+
+static void on_inject_orbits_req(QmiClientLoc *loc,
+                                 QmiIndicationLocInjectPredictedOrbitsRequestOutput *ind,
+                                 gpointer data) {
+    guint32 max_file = 0, max_part = 0;
+    GArray *servers = NULL;
+    qmi_indication_loc_inject_predicted_orbits_request_output_get_allowed_sizes(ind, &max_file,
+                                                                                &max_part, NULL);
+    qmi_indication_loc_inject_predicted_orbits_request_output_get_server_list(ind, &servers, NULL);
+    printf("info=req_inject_orbits max_file=%u max_part=%u", max_file, max_part);
+    if (servers) {
+        for (guint i = 0; i < servers->len; i++) {
+            const gchar *s = g_array_index(servers, gchar *, i);
+            if (s && s[0]) printf(" srv%u=%s", i, s);
+        }
+    }
+    printf("\n");
+    fflush(stdout);
+}
+
+static void on_inject_pos_req(QmiClientLoc *loc, gpointer ind, gpointer data) {
+    printf("info=req_inject_position\n");
+    fflush(stdout);
 }
 
 static void on_nmea(QmiClientLoc *loc, QmiIndicationLocNmeaOutput *ind, gpointer data) {
@@ -231,6 +377,29 @@ static void on_position_report(QmiClientLoc *loc, QmiIndicationLocPositionReport
     printf("pos status=%d flags=%u lat=%.8f lon=%.8f alt=%.3f hacc=%.3f vacc=%.3f "
            "speed=%.3f sacc=%.3f bearing=%.3f bacc=%.3f utc=%" G_GUINT64_FORMAT "\n",
            (int)status, flags, lat, lon, alt, hacc, vacc, speed, sacc, bearing, bacc, utc_ms);
+
+    QmiLocTechnologyUsed tech = 0;
+    QmiLocReliability hrel = QMI_LOC_RELIABILITY_NOT_SET;
+    QmiLocTimeSource tsrc = QMI_LOC_TIME_SOURCE_INVALID;
+    gfloat tunc = -1.0f;
+    guint32 fix_cnt = 0;
+    GArray *svs_used = NULL;
+    gboolean has_tech =
+            qmi_indication_loc_position_report_output_get_technology_used(ind, &tech, NULL);
+    gboolean has_rel =
+            qmi_indication_loc_position_report_output_get_horizontal_reliability(ind, &hrel, NULL);
+    gboolean has_tsrc =
+            qmi_indication_loc_position_report_output_get_time_source(ind, &tsrc, NULL);
+    gboolean has_tunc =
+            qmi_indication_loc_position_report_output_get_time_uncertainty(ind, &tunc, NULL);
+    gboolean has_fcnt =
+            qmi_indication_loc_position_report_output_get_session_fix_count(ind, &fix_cnt, NULL);
+    qmi_indication_loc_position_report_output_get_satellites_used(ind, &svs_used, NULL);
+    printf("info=pos_detail status=%d tech=0x%x rel=%d svs_used=%u fix_cnt=%u time_src=%d "
+           "time_unc=%.1fms hacc=%.1fm\n",
+           (int)status, has_tech ? (unsigned)tech : 0u, has_rel ? (int)hrel : -1,
+           svs_used ? svs_used->len : 0u, has_fcnt ? fix_cnt : 0u, has_tsrc ? (int)tsrc : -1,
+           has_tunc ? tunc : -1.0f, hacc);
     fflush(stdout);
 }
 
@@ -295,6 +464,8 @@ static void ensure_modem_online(QmiDevice *dev, Wait *w) {
     if (out && qmi_message_dms_get_operating_mode_output_get_result(out, &error)) {
         QmiDmsOperatingMode mode = QMI_DMS_OPERATING_MODE_ONLINE;
         qmi_message_dms_get_operating_mode_output_get_mode(out, &mode, NULL);
+        printf("info=dms_mode=%d\n", (int)mode);
+        fflush(stdout);
         if (mode != QMI_DMS_OPERATING_MODE_ONLINE) {
             g_autoptr(QmiMessageDmsSetOperatingModeInput) sin =
                     qmi_message_dms_set_operating_mode_input_new();
@@ -320,18 +491,40 @@ static void ensure_modem_online(QmiDevice *dev, Wait *w) {
     g_clear_error(&error);
 }
 
+static void on_utc_time_ind(QmiClientLoc *loc, QmiIndicationLocInjectUtcTimeOutput *ind,
+                            gpointer data) {
+    IndWait *iw = data;
+    iw->status = QMI_LOC_INDICATION_STATUS_GENERAL_FAILURE;
+    qmi_indication_loc_inject_utc_time_output_get_indication_status(ind, &iw->status, NULL);
+    iw->received = TRUE;
+    g_main_loop_quit(iw->loop);
+}
+
 static void inject_utc_time(QmiClient *loc, Wait *w, guint64 utc_ms, guint32 unc_ms) {
     GError *error = NULL;
+    IndWait iw = {.loop = g_main_loop_new(NULL, FALSE)};
+    gulong sig = g_signal_connect(loc, "inject-utc-time", G_CALLBACK(on_utc_time_ind), &iw);
+
     g_autoptr(QmiMessageLocInjectUtcTimeInput) in = qmi_message_loc_inject_utc_time_input_new();
     qmi_message_loc_inject_utc_time_input_set_utc_time(in, utc_ms, NULL);
     qmi_message_loc_inject_utc_time_input_set_time_uncertainty(in, unc_ms, NULL);
+    qmi_message_loc_inject_utc_time_input_set_time_source(in, QMI_LOC_INJECTED_TIME_SOURCE_NTP,
+                                                          NULL);
     qmi_client_loc_inject_utc_time(QMI_CLIENT_LOC(loc), in, 10, NULL, on_done, w);
     g_autoptr(QmiMessageLocInjectUtcTimeOutput) out =
             qmi_client_loc_inject_utc_time_finish(QMI_CLIENT_LOC(loc), wait_result(w), &error);
     if (!out || !qmi_message_loc_inject_utc_time_output_get_result(out, &error)) {
         printf("warning=inject utc time: %s\n", error ? error->message : "unknown");
         g_clear_error(&error);
+    } else if (!wait_indication(&iw, 2)) {
+        printf("warning=inject utc time ind timeout\n");
+    } else {
+        printf("info=utc_inject utc=%" G_GUINT64_FORMAT " unc=%u ind_status=%d\n", utc_ms, unc_ms,
+               (int)iw.status);
     }
+    fflush(stdout);
+    g_signal_handler_disconnect(loc, sig);
+    g_main_loop_unref(iw.loop);
 }
 
 static int inject_xtra_chunks(QmiClient *loc, Wait *w, const guint8 *data, gsize len,
@@ -493,6 +686,182 @@ static int run_inject_pos(QmiClient *loc, Wait *w, gdouble lat, gdouble lon, gfl
     return 0;
 }
 
+static void on_validity_ind(QmiClientLoc *loc,
+                            QmiIndicationLocGetPredictedOrbitsDataValidityOutput *ind,
+                            gpointer data) {
+    IndWait *iw = data;
+    guint64 start_utc = 0;
+    guint16 dur_h = 0;
+    iw->status = QMI_LOC_INDICATION_STATUS_GENERAL_FAILURE;
+    qmi_indication_loc_get_predicted_orbits_data_validity_output_get_indication_status(
+            ind, &iw->status, NULL);
+    gboolean has_v = qmi_indication_loc_get_predicted_orbits_data_validity_output_get_validity_info(
+            ind, &start_utc, &dur_h, NULL);
+    printf("info=orbits_validity ind_status=%d has_info=%d start_utc=%" G_GUINT64_FORMAT
+           " duration_h=%u\n",
+           (int)iw->status, (int)has_v, start_utc, (unsigned)dur_h);
+    fflush(stdout);
+    iw->received = TRUE;
+    g_main_loop_quit(iw->loop);
+}
+
+static void on_source_ind(QmiClientLoc *loc,
+                          QmiIndicationLocGetPredictedOrbitsDataSourceOutput *ind, gpointer data) {
+    IndWait *iw = data;
+    guint32 max_file = 0, max_part = 0;
+    GArray *servers = NULL;
+    iw->status = QMI_LOC_INDICATION_STATUS_GENERAL_FAILURE;
+    qmi_indication_loc_get_predicted_orbits_data_source_output_get_indication_status(
+            ind, &iw->status, NULL);
+    qmi_indication_loc_get_predicted_orbits_data_source_output_get_allowed_sizes(ind, &max_file,
+                                                                                 &max_part, NULL);
+    qmi_indication_loc_get_predicted_orbits_data_source_output_get_server_list(ind, &servers, NULL);
+    printf("info=orbits_source ind_status=%d max_file=%u max_part=%u", (int)iw->status, max_file,
+           max_part);
+    if (servers) {
+        for (guint i = 0; i < servers->len; i++) {
+            const gchar *s = g_array_index(servers, gchar *, i);
+            if (s && s[0]) printf(" srv%u=%s", i, s);
+        }
+    }
+    printf("\n");
+    fflush(stdout);
+    iw->received = TRUE;
+    g_main_loop_quit(iw->loop);
+}
+
+static void on_engine_lock_ind(QmiClientLoc *loc, QmiIndicationLocGetEngineLockOutput *ind,
+                               gpointer data) {
+    IndWait *iw = data;
+    QmiLocLockType lock_type = QMI_LOC_LOCK_TYPE_NONE;
+    iw->status = QMI_LOC_INDICATION_STATUS_GENERAL_FAILURE;
+    qmi_indication_loc_get_engine_lock_output_get_indication_status(ind, &iw->status, NULL);
+    qmi_indication_loc_get_engine_lock_output_get_lock_type(ind, &lock_type, NULL);
+    printf("info=engine_lock ind_status=%d lock_type=%d\n", (int)iw->status, (int)lock_type);
+    fflush(stdout);
+    iw->received = TRUE;
+    g_main_loop_quit(iw->loop);
+}
+
+static void on_op_mode_ind(QmiClientLoc *loc, QmiIndicationLocGetOperationModeOutput *ind,
+                           gpointer data) {
+    IndWait *iw = data;
+    QmiLocOperationMode op_mode = QMI_LOC_OPERATION_MODE_DEFAULT;
+    iw->status = QMI_LOC_INDICATION_STATUS_GENERAL_FAILURE;
+    qmi_indication_loc_get_operation_mode_output_get_indication_status(ind, &iw->status, NULL);
+    qmi_indication_loc_get_operation_mode_output_get_operation_mode(ind, &op_mode, NULL);
+    printf("info=op_mode ind_status=%d mode=%d\n", (int)iw->status, (int)op_mode);
+    fflush(stdout);
+    iw->received = TRUE;
+    g_main_loop_quit(iw->loop);
+}
+
+static void on_nmea_types_ind(QmiClientLoc *loc, QmiIndicationLocGetNmeaTypesOutput *ind,
+                              gpointer data) {
+    IndWait *iw = data;
+    QmiLocNmeaType mask = 0;
+    iw->status = QMI_LOC_INDICATION_STATUS_GENERAL_FAILURE;
+    qmi_indication_loc_get_nmea_types_output_get_indication_status(ind, &iw->status, NULL);
+    qmi_indication_loc_get_nmea_types_output_get_nmea_types(ind, &mask, NULL);
+    printf("info=nmea_types ind_status=%d mask=0x%x\n", (int)iw->status, (unsigned)mask);
+    fflush(stdout);
+    iw->received = TRUE;
+    g_main_loop_quit(iw->loop);
+}
+
+static void query_modem_diagnostics(QmiClient *loc, Wait *w) {
+    GError *error = NULL;
+    IndWait iw = {.loop = g_main_loop_new(NULL, FALSE)};
+
+    {
+        iw.received = FALSE;
+        gulong sig = g_signal_connect(loc, "get-predicted-orbits-data-validity",
+                                      G_CALLBACK(on_validity_ind), &iw);
+        qmi_client_loc_get_predicted_orbits_data_validity(QMI_CLIENT_LOC(loc), NULL, 5, NULL,
+                                                          on_done, w);
+        g_autoptr(QmiMessageLocGetPredictedOrbitsDataValidityOutput) out =
+                qmi_client_loc_get_predicted_orbits_data_validity_finish(QMI_CLIENT_LOC(loc),
+                                                                         wait_result(w), &error);
+        if (out &&
+            qmi_message_loc_get_predicted_orbits_data_validity_output_get_result(out, &error)) {
+            if (!wait_indication(&iw, 2)) printf("warning=orbits_validity ind timeout\n");
+        } else {
+            printf("warning=orbits_validity req: %s\n", error ? error->message : "unknown");
+            g_clear_error(&error);
+        }
+        g_signal_handler_disconnect(loc, sig);
+    }
+
+    {
+        iw.received = FALSE;
+        gulong sig = g_signal_connect(loc, "get-predicted-orbits-data-source",
+                                      G_CALLBACK(on_source_ind), &iw);
+        qmi_client_loc_get_predicted_orbits_data_source(QMI_CLIENT_LOC(loc), NULL, 5, NULL, on_done,
+                                                        w);
+        g_autoptr(QmiMessageLocGetPredictedOrbitsDataSourceOutput) out =
+                qmi_client_loc_get_predicted_orbits_data_source_finish(QMI_CLIENT_LOC(loc),
+                                                                       wait_result(w), &error);
+        if (out &&
+            qmi_message_loc_get_predicted_orbits_data_source_output_get_result(out, &error)) {
+            if (!wait_indication(&iw, 2)) printf("warning=orbits_source ind timeout\n");
+        } else {
+            printf("warning=orbits_source req: %s\n", error ? error->message : "unknown");
+            g_clear_error(&error);
+        }
+        g_signal_handler_disconnect(loc, sig);
+    }
+
+    {
+        iw.received = FALSE;
+        gulong sig = g_signal_connect(loc, "get-engine-lock", G_CALLBACK(on_engine_lock_ind), &iw);
+        qmi_client_loc_get_engine_lock(QMI_CLIENT_LOC(loc), NULL, 5, NULL, on_done, w);
+        g_autoptr(QmiMessageLocGetEngineLockOutput) out =
+                qmi_client_loc_get_engine_lock_finish(QMI_CLIENT_LOC(loc), wait_result(w), &error);
+        if (out && qmi_message_loc_get_engine_lock_output_get_result(out, &error)) {
+            if (!wait_indication(&iw, 2)) printf("warning=engine_lock ind timeout\n");
+        } else {
+            printf("warning=engine_lock req: %s\n", error ? error->message : "unknown");
+            g_clear_error(&error);
+        }
+        g_signal_handler_disconnect(loc, sig);
+    }
+
+    {
+        iw.received = FALSE;
+        gulong sig =
+                g_signal_connect(loc, "get-operation-mode", G_CALLBACK(on_op_mode_ind), &iw);
+        qmi_client_loc_get_operation_mode(QMI_CLIENT_LOC(loc), NULL, 5, NULL, on_done, w);
+        g_autoptr(QmiMessageLocGetOperationModeOutput) out =
+                qmi_client_loc_get_operation_mode_finish(QMI_CLIENT_LOC(loc), wait_result(w),
+                                                         &error);
+        if (out && qmi_message_loc_get_operation_mode_output_get_result(out, &error)) {
+            if (!wait_indication(&iw, 2)) printf("warning=op_mode ind timeout\n");
+        } else {
+            printf("warning=op_mode req: %s\n", error ? error->message : "unknown");
+            g_clear_error(&error);
+        }
+        g_signal_handler_disconnect(loc, sig);
+    }
+
+    {
+        iw.received = FALSE;
+        gulong sig = g_signal_connect(loc, "get-nmea-types", G_CALLBACK(on_nmea_types_ind), &iw);
+        qmi_client_loc_get_nmea_types(QMI_CLIENT_LOC(loc), NULL, 5, NULL, on_done, w);
+        g_autoptr(QmiMessageLocGetNmeaTypesOutput) out =
+                qmi_client_loc_get_nmea_types_finish(QMI_CLIENT_LOC(loc), wait_result(w), &error);
+        if (out && qmi_message_loc_get_nmea_types_output_get_result(out, &error)) {
+            if (!wait_indication(&iw, 2)) printf("warning=nmea_types ind timeout\n");
+        } else {
+            printf("warning=nmea_types req: %s\n", error ? error->message : "unknown");
+            g_clear_error(&error);
+        }
+        g_signal_handler_disconnect(loc, sig);
+    }
+
+    fflush(stdout);
+    g_main_loop_unref(iw.loop);
+}
+
 static int run_delete_aiding(QmiClient *loc, Wait *w, guint32 flags) {
     GError *error = NULL;
     g_autoptr(QmiMessageLocDeleteAssistanceDataInput) in =
@@ -521,6 +890,7 @@ int main(int argc, char **argv) {
 
     enum {
         MODE_TRACK,
+        MODE_DIAG,
         MODE_INJECT_XTRA,
         MODE_INJECT_TIME,
         MODE_INJECT_POS,
@@ -537,6 +907,8 @@ int main(int argc, char **argv) {
         if (strcmp(argv[i], "--interval") == 0 && i + 1 < argc) {
             long v = atol(argv[++i]);
             if (v >= 100 && v <= 600000) interval_ms = (guint32)v;
+        } else if (strcmp(argv[i], "--diag") == 0) {
+            mode = MODE_DIAG;
         } else if (strcmp(argv[i], "--inject-xtra") == 0 && i + 1 < argc) {
             mode = MODE_INJECT_XTRA;
             xtra_path = argv[++i];
@@ -584,7 +956,9 @@ int main(int argc, char **argv) {
     int exit_code = 0;
 
     if (mode != MODE_TRACK) {
-        if (mode == MODE_INJECT_XTRA) {
+        if (mode == MODE_DIAG) {
+            query_modem_diagnostics(loc, &w);
+        } else if (mode == MODE_INJECT_XTRA) {
             exit_code = run_inject_xtra(loc, &w, xtra_path);
         } else if (mode == MODE_INJECT_TIME) {
             inject_utc_time(loc, &w, inject_time_ms, inject_time_unc);
@@ -657,9 +1031,17 @@ int main(int argc, char **argv) {
         if (utc > 0) inject_utc_time(loc, &w, utc, 5000);
     }
 
+    query_modem_diagnostics(loc, &w);
+
     register_events(dev, loc, &w);
     g_signal_connect(loc, "nmea", G_CALLBACK(on_nmea), NULL);
     g_signal_connect(loc, "position-report", G_CALLBACK(on_position_report), NULL);
+    g_signal_connect(loc, "gnss-sv-info", G_CALLBACK(on_gnss_sv_info), NULL);
+    g_signal_connect(loc, "engine-state", G_CALLBACK(on_engine_state), NULL);
+    g_signal_connect(loc, "inject-time-request", G_CALLBACK(on_inject_time_req), NULL);
+    g_signal_connect(loc, "inject-predicted-orbits-request", G_CALLBACK(on_inject_orbits_req),
+                     NULL);
+    g_signal_connect(loc, "inject-position-request", G_CALLBACK(on_inject_pos_req), NULL);
 
     {
         g_autoptr(QmiMessageLocStartInput) in = qmi_message_loc_start_input_new();
