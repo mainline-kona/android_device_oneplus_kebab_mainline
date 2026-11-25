@@ -122,6 +122,52 @@ static QrtrNode *find_loc_node(QrtrBus *bus) {
     return NULL;
 }
 
+/*
+ * Bring the external SDX55 modem to ONLINE mode via QMI DMS when no RIL has
+ * done so yet. Without ONLINE mode (e.g. modem sitting in shutting-down / LPM),
+ * QMI LOC accepts START but keeps ENGINE_STATE=OFF with zero SV/NMEA output.
+ */
+static void ensure_modem_online(QmiDevice *dev, Wait *w) {
+    GError *error = NULL;
+    qmi_device_allocate_client(dev, QMI_SERVICE_DMS, QMI_CID_NONE, 10, NULL, on_done, w);
+    g_autoptr(QmiClient) dms = qmi_device_allocate_client_finish(dev, wait_result(w), &error);
+    if (!dms) {
+        printf("warning=dms allocate: %s\n", error ? error->message : "unknown");
+        g_clear_error(&error);
+        return;
+    }
+
+    qmi_client_dms_get_operating_mode(QMI_CLIENT_DMS(dms), NULL, 10, NULL, on_done, w);
+    g_autoptr(QmiMessageDmsGetOperatingModeOutput) out =
+            qmi_client_dms_get_operating_mode_finish(QMI_CLIENT_DMS(dms), wait_result(w), &error);
+    if (out && qmi_message_dms_get_operating_mode_output_get_result(out, &error)) {
+        QmiDmsOperatingMode mode = QMI_DMS_OPERATING_MODE_ONLINE;
+        qmi_message_dms_get_operating_mode_output_get_mode(out, &mode, NULL);
+        if (mode != QMI_DMS_OPERATING_MODE_ONLINE) {
+            g_autoptr(QmiMessageDmsSetOperatingModeInput) sin =
+                    qmi_message_dms_set_operating_mode_input_new();
+            qmi_message_dms_set_operating_mode_input_set_mode(sin, QMI_DMS_OPERATING_MODE_ONLINE,
+                                                              NULL);
+            qmi_client_dms_set_operating_mode(QMI_CLIENT_DMS(dms), sin, 10, NULL, on_done, w);
+            g_autoptr(QmiMessageDmsSetOperatingModeOutput) sout =
+                    qmi_client_dms_set_operating_mode_finish(QMI_CLIENT_DMS(dms), wait_result(w),
+                                                             &error);
+            if (!sout || !qmi_message_dms_set_operating_mode_output_get_result(sout, &error)) {
+                printf("warning=dms set online: %s\n", error ? error->message : "unknown");
+                g_clear_error(&error);
+            }
+        }
+    } else {
+        printf("warning=dms get mode: %s\n", error ? error->message : "unknown");
+        g_clear_error(&error);
+    }
+
+    qmi_device_release_client(dev, dms, QMI_DEVICE_RELEASE_CLIENT_FLAGS_RELEASE_CID, 5, NULL,
+                              on_done, w);
+    qmi_device_release_client_finish(dev, wait_result(w), &error);
+    g_clear_error(&error);
+}
+
 int main(void) {
     GError *error = NULL;
     Wait w = {.loop = g_main_loop_new(NULL, FALSE)};
@@ -145,6 +191,8 @@ int main(void) {
     if (!dev) fail("open device", error);
     qmi_device_open(dev, QMI_DEVICE_OPEN_FLAGS_NONE, 15, NULL, on_done, &w);
     if (!qmi_device_open_finish(dev, wait_result(&w), &error)) fail("open device", error);
+
+    ensure_modem_online(dev, &w);
 
     qmi_device_allocate_client(dev, QMI_SERVICE_LOC, QMI_CID_NONE, 10, NULL, on_done, &w);
     g_autoptr(QmiClient) loc = qmi_device_allocate_client_finish(dev, wait_result(&w), &error);
