@@ -44,11 +44,11 @@ Local fixes ready in `device/oneplus/kebab_mainline`:
 - [ ] **UDFPS Polish (if needed after live test)**:
   - Tune `config_udfpsColor` (`#ffffe6` warm white in `KebabMainlineOPlusSystemUIResTarget`, if optical SNR/contrast benefits over `#ffffffff`).
   - Optional screen-off UDFPS wake gesture (requires touchscreen wake hook + `org.lineageos.sensor.udfps` sensor).
-- [ ] **Cellular / RIL (External SDX55 over MHI)**:
-  - Verify modem online state after `tqftpserv` fix.
-  - Bring up QMI RIL / SIM / mobile data (`mhi_hwip0`) / CS-VOICE (`kona-voicecall`) / IMS.
-  - Once modem boot stability is proven, re-evaluate `sahara_mdm.efs_writeback=0` in `init.kebab.rc`.
-  - Optional: port `nrmodeswitcher` (5G SA/NSA toggle) from `hardware_oplus`.
+- [ ] **Cellular / RIL (External SDX55 over MHI)** — tracked in detail in [RIL_BRINGUP.md](RIL_BRINGUP.md):
+  - Phase 1: Kernel `CONFIG_RMNET=y` + QMI `kona-dataconn` live multi-APN proof (`mhi_hwip0` -> `rmnet_data0/1`).
+  - Phase 2–4: AIDL v5 RIL (`kona-ril`), SIM/Network/Signal, Android Mobile Data, SMS.
+  - Phase 5: Open AOSP VoLTE/VoWiFi (`hardware/lineage/generic-ims` + `QMI_SERVICE_UIM` ISIM APDU/AKA).
+  - Phase 6: Legacy CS Voice (`q6voice`), Dual-SIM (`slot2`), EFS writeback, SELinux Enforcing.
 - [ ] **Deep Sleep / Suspend & Resume**:
   - Debug USB gadget drop and hang on resume, then switch `TARGET_SUPPORTS_SUSPEND := true` in `device.mk`.
 - [ ] **Camera**:
