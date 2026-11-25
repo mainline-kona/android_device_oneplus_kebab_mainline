@@ -49,10 +49,6 @@ BOARD_KERNEL_CMDLINE := \
     androidboot.init_fatal_reboot_target=bootloader \
     msm.separate_gpu_kms=1
 
-BOARD_BOOTCONFIG := \
-    androidboot.hardware=kebab \
-    androidboot.init_fatal_reboot_target=bootloader
-
 BOARD_RECOVERY_KERNEL_CMDLINE := androidboot.bootmode=recovery
 
 # Kernel (ACK 6.18 LTS inline build with gki_defconfig + kebab-android.config)

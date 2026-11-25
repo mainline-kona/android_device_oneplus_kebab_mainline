@@ -4,13 +4,13 @@
 #
 
 # Backlight
-genfscon sysfs /devices/platform/soc@0/ae00000.display-subsystem/ae94000.dsi.0/backlight    u:object_r:vendor_sysfs_backlight:s0
+genfscon sysfs /devices/platform/soc@0/ae00000.display-subsystem/ae94000.dsi.0/backlight	u:object_r:vendor_sysfs_backlight:s0
 
 # Bluetooth address seed
-genfscon sysfs /devices/soc0/serial_number    u:object_r:vendor_sysfs_soc_info:s0
+genfscon sysfs /devices/soc0/serial_number	u:object_r:vendor_sysfs_soc_info:s0
 
 # Battery & Fuel Gauge
-genfscon sysfs /devices/platform/soc@0/990000.i2c/i2c-16/16-0055/power_supply u:object_r:sysfs_batteryinfo:s0
+genfscon sysfs /devices/platform/soc@0/990000.i2c/i2c-16/16-0055/power_supply	u:object_r:sysfs_batteryinfo:s0
 
 # SDX55 raw-IP netdev (mhi_net on IP_HW0): netd sets its MTU via sysfs
-genfscon sysfs /devices/platform/soc@0/1c10000.pcie/pci0002:00/0002:00:00.0/0002:01:00.0/mhi0/mhi0_IP_HW0/net u:object_r:sysfs_net:s0
+genfscon sysfs /devices/platform/soc@0/1c10000.pcie/pci0002:00/0002:00:00.0/0002:01:00.0/mhi0/mhi0_IP_HW0/net	u:object_r:sysfs_net:s0

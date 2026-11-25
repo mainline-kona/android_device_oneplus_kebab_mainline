@@ -4,17 +4,18 @@
 #
 
 # HALs
-/vendor/bin/hw/android\.hardware\.light-service\.lineage    u:object_r:hal_light_default_exec:s0
-/vendor/bin/hw/android\.hardware\.usb-service\.basic        u:object_r:hal_usb_default_exec:s0
-/vendor/bin/hw/android\.hardware\.gatekeeper-service-qti    u:object_r:hal_gatekeeper_default_exec:s0
-/vendor/bin/hw/android\.hardware\.security\.keymint-service-qti u:object_r:hal_keymint_default_exec:s0
-/vendor/bin/qseecomd                                       u:object_r:tee_exec:s0
-/vendor/bin/bringup-log\.sh                                u:object_r:vendor_shell_exec:s0
+/vendor/bin/hw/android\.hardware\.gatekeeper-service-qti	u:object_r:hal_gatekeeper_default_exec:s0
+/vendor/bin/hw/android\.hardware\.light-service\.lineage	u:object_r:hal_light_default_exec:s0
+/vendor/bin/hw/android\.hardware\.security\.keymint-service-qti	u:object_r:hal_keymint_default_exec:s0
+/vendor/bin/hw/android\.hardware\.usb-service\.basic		u:object_r:hal_usb_default_exec:s0
+
+# Vendor binaries
+/vendor/bin/bringup-log\.sh					u:object_r:vendor_shell_exec:s0
+/vendor/bin/qseecomd						u:object_r:tee_exec:s0
 
 # QSEE apps outside QTEE's object interface
-/dev/qseecom_bridge                                       u:object_r:tee_device:s0
+/dev/qseecom_bridge	u:object_r:tee_device:s0
 
 # Telephony (external SDX55 over MHI)
-/vendor/bin/hw/libcuttlefish-rild                         u:object_r:rild_exec:s0
-/dev/wwan0at[0-9]+                                        u:object_r:radio_device:s0
-/dev/wwan0qmi[0-9]+                                       u:object_r:radio_device:s0
+/dev/wwan0at[0-9]+	u:object_r:radio_device:s0
+/dev/wwan0qmi[0-9]+	u:object_r:radio_device:s0
