@@ -1,1 +1,2 @@
 type vendor_sysfs_oplus_display, fs_type, sysfs_type;
+type vendor_proc_touchpanel, fs_type, proc_type;

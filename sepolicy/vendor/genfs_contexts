@@ -24,3 +24,6 @@ genfscon sysfs /devices/platform/soc@0/1c10000.pcie/pci0002:00/0002:00:00.0/0002
 
 # OPlus panel HBM & UDFPS finger-press sysfs
 genfscon sysfs /kernel/oplus_display	u:object_r:vendor_sysfs_oplus_display:s0
+
+# Goodix UDFPS touchscreen hint procfs node
+genfscon proc /touchpanel	u:object_r:vendor_proc_touchpanel:s0
