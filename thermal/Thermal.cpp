@@ -135,8 +135,7 @@ void classifyZone(const std::string& zoneType, TemperatureType* outType,
         *outHot = makeHotThresholds(40.0f, 43.0f, 45.0f, 48.0f, 52.0f, 60.0f);
         return;
     }
-    if (zoneType == "skin-thermal" || zoneType == "skin-pm8150-thermal" ||
-        zoneType == "xo-thermal") {
+    if (zoneType == "skin-thermal" || zoneType == "skin-pm8150-thermal") {
         *outType = TemperatureType::SKIN;
         *outHot = makeHotThresholds(37.0f, 41.0f, 45.0f, 48.0f, 52.0f, 60.0f);
         return;
@@ -167,7 +166,7 @@ void classifyZone(const std::string& zoneType, TemperatureType* outType,
         *outHot = makeHotThresholds(kNaN, kNaN, 90.0f, 95.0f, 105.0f, 110.0f);
         return;
     }
-    if (zoneType == "camera-flash-thermal") {
+    if (zoneType == "cam-flash-thermal") {
         *outType = TemperatureType::FLASHLIGHT;
         *outHot = makeHotThresholds(kNaN, kNaN, 65.0f, 75.0f, 85.0f, 95.0f);
         return;
