@@ -21,7 +21,7 @@ TARGET_LIGHT_HAL_SCAN_FOR_BACKLIGHT_DEVICES := true
 # Suspend/resume isn't brought up yet: the USB gadget drops and the phone can hang on resume
 TARGET_SUPPORTS_SUSPEND := false
 
-# Hardware video codecs: venus (bound at post-fs, /dev/video0 dec, /dev/video1 enc)
+# Hardware video codecs: venus (/dev/video0 enc, /dev/video1 dec)
 # through the V4L2 Codec2 HAL, with kebab's own codec list
 TARGET_MEDIA_C2_HAL := v4l2_codec2
 TARGET_V4L2_CODEC2_USE_EXAMPLE_CONFIGURATION := false
@@ -33,9 +33,14 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/media/media_codecs_c2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_c2.xml
 
 PRODUCT_VENDOR_PROPERTIES += \
+    ro.vendor.v4l2_codec2.decoder.supported.h264=true \
+    ro.vendor.v4l2_codec2.decoder.supported.hevc=true \
+    ro.vendor.v4l2_codec2.decoder.supported.vp8=true \
+    ro.vendor.v4l2_codec2.decoder.supported.vp9=true \
+    ro.vendor.v4l2_codec2.encoder.supported.h264=true \
     ro.vendor.v4l2_codec2.decode_concurrent_instances=8 \
     ro.vendor.v4l2_codec2.encode_concurrent_instances=8 \
-    debug.stagefright.c2-poolmask=0xf50000
+    debug.stagefright.c2-poolmask=0x1f50000
 
 # A/B
 PRODUCT_PACKAGES += \

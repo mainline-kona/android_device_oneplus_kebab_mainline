@@ -16,9 +16,9 @@ debug.hwui.renderer=skiagl
 # Light
 vendor.light.backlight.disable=false
 
-# Sensors: libssc over SLPI (5/5 supported sensors; skip missing ambient_light name so boot doesn't stall)
+# Sensors: libssc over SLPI (accel/gyro/magn/light[wise_light]/proximity/compass)
 vendor.sensors.backends=libssc,iio
-vendor.sensors.ssc.sensors=accel,gyro,magn,proximity,compass
+vendor.sensors.ssc.sensors=accel,gyro,magn,light,proximity,compass
 vendor.sensors.wait_for_sensors=0
 vendor.sensors.ssc.discovery_wait_ms=5000
 
