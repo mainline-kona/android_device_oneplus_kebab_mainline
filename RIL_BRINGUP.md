@@ -89,14 +89,14 @@ Captured directly from live hardware (`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1.547
 
 ### Phase 1 — Kernel `CONFIG_RMNET` & Standalone QMI Data Plane (`kona-dataconn`)
 **Goal**: Prove rock-solid, dual-stack, multi-APN (`jionet` + `ims`) packet data directly over `mhi_hwip0` + `rmnet_data0/1` before involving Android Telephony.
-- [ ] Enable `CONFIG_RMNET=y` in `mainline-kona/arch/arm64/configs/kebab-android.config` (verify `drivers/net/ethernet/qualcomm/rmnet/` builds cleanly with ACK 6.18).
-- [ ] Copy `mainline-kona-ref/android_hardware_mainline_kona-ril` into `los/hardware/mainline/kona-ril` (clean local git repo/history).
-- [ ] Fix `kona-ril/dataconn/dataconn.c`:
-  - Dynamic QRTR node lookup for `QMI_SERVICE_WDS` (fallback node 3).
+- [x] Enable `CONFIG_NET_VENDOR_QUALCOMM=y` + `CONFIG_RMNET=y` in `mainline-kona/arch/arm64/configs/kebab-android.config` (`3a5bd1dd5b94`, compile-verified `drivers/net/ethernet/qualcomm/rmnet/built-in.a`).
+- [x] Clone `mainline-kona-ref/android_hardware_mainline_kona-ril` into `los/hardware/mainline/kona-ril`.
+- [x] Fix `kona-ril/dataconn/dataconn.c` & `Android.bp` (`825b90b`, compiled cleanly with `-Wall -Wextra`):
+  - Dynamic QRTR node lookup for `QMI_SERVICE_WDS` (fallback node 3) + `ensure_modem_online()` via `QMI_SERVICE_DMS`.
   - Add `"mhi_hwip0"` as primary parent interface in `get_parent_iface()`.
-  - Query `WDA_GET_DATA_FORMAT` with `endpoint_info (PCIE, 4)` first; only call `WDA_SET_DATA_FORMAT` (Raw-IP + QMAPv5, DL 32768 / 32 datagrams) if not already set.
-  - Print IPv4 + IPv6 addresses, gateways, DNS, P-CSCF (both IPv4 and IPv6 P-CSCF!), MTU, and clean teardown on `SIGTERM`.
-- [ ] **Phase 1 Live Test** (after flashing `boot.img` with `CONFIG_RMNET=y`):
+  - Query `WDA_GET_DATA_FORMAT` with `endpoint_info (PCIE, 4)` first; skip `WDA_SET_DATA_FORMAT` when already configured for Raw-IP + QMAPv5.
+  - Extract IPv4 + IPv6 addresses, gateways, DNS, P-CSCF (IPv4 + domain + raw TLV `0x2E` IPv6 P-CSCF), MTU, and clean QMI client/link teardown on `SIGTERM`.
+- [ ] **Phase 1 Live Test** (after building & flashing `boot.img` with `CONFIG_RMNET=y`):
   - [ ] Run `kona-dataconn jionet ipv4v6 1` over ADB -> `rmnet_data0` comes up with real IP/gateway/DNS.
   - [ ] `ping -I rmnet_data0 -c 3 8.8.8.8` and/or `ping6 -I rmnet_data0 -c 3 2001:4860:4860::8888` succeeds with 0% packet loss!
   - [ ] Simultaneously run `kona-dataconn ims ipv4v6 2` -> `rmnet_data1` comes up with real `ims` IP + P-CSCF while `rmnet_data0` keeps pinging!
