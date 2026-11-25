@@ -1,0 +1,3 @@
+# Allow hexagonrpcd-sdsp to write/rename SLPI sensor registry updates (e.g. devinfo.gsensor)
+allow vendor_hexagonrpcd vendor_persist_sensors_file:dir create_dir_perms;
+allow vendor_hexagonrpcd vendor_persist_sensors_file:file create_file_perms;
