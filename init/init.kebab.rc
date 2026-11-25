@@ -46,7 +46,7 @@ on post-fs
     # (mounted at /vendor/firmware_mnt by mount_all). The DT asks for "adsp.mdt",
     # "cdsp.mdt", "slpi.mdt" and "venus.mdt", so point the kernel loader there
     # before (re)starting the remoteprocs.
-    write /sys/module/firmware_class/parameters/path /vendor/firmware_mnt/image
+    write /sys/module/firmware_class/parameters/path /vendor/firmware,/vendor/firmware_mnt/image
     # The X55 fetches its MCFG/RF config files over TFTP (QRTR service 4096)
     # while it boots, a few seconds after sbl1.mbn becomes readable here.
     # qcom-common only starts tqftpserv at "boot", well after the modem asked
