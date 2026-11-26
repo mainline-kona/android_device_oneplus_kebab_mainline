@@ -56,6 +56,9 @@
      <!-- Number of physical SIM slots (OnePlus 8T dual-SIM tray) -->
      <integer name="config_num_physical_slots">2</integer>
 
+     <!-- Enable IMS Video Telephony (ViLTE/ViNR) platform support -->
+     <bool name="config_device_vt_available">true</bool>
+
      <!-- Use the modern manual network selection UI. -->
      <bool name="config_enableNewAutoSelectNetworkUI">true</bool>
 
