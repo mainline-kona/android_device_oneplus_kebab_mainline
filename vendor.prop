@@ -37,8 +37,9 @@ bluetooth.hfp.software_datapath.enabled=true
 # USB
 vendor.usb.product_string=OnePlus 8T
 
-# Radio: LTE/NR preferred (NR_LTE_GSM_WCDMA) and DSDS
+# Radio: LTE/NR preferred (NR_LTE_GSM_WCDMA) and DSDS (2 physical slots)
 persist.radio.multisim.config=dsds
+ro.telephony.sim_slots.count=2
 ro.telephony.default_network=33,33
 
 # Radio: stock ground-truth parameters

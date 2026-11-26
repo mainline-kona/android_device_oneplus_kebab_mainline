@@ -53,6 +53,9 @@
      <!-- Whether the device enable the non-standalone (NSA) mode of 5G NR.-->
      <bool name="config_telephony5gNonStandalone">true</bool>
 
+     <!-- Number of physical SIM slots (OnePlus 8T dual-SIM tray) -->
+     <integer name="config_num_physical_slots">2</integer>
+
      <!-- Use the modern manual network selection UI. -->
      <bool name="config_enableNewAutoSelectNetworkUI">true</bool>
 
