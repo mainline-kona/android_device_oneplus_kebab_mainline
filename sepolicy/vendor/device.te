@@ -1,3 +1,2 @@
 type vendor_goodix_fp_device, dev_type;
-type vendor_haptic_device, dev_type;
 type vendor_sg_device, dev_type;

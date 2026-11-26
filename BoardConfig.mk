@@ -112,6 +112,7 @@ TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
 
 # SELinux
 BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
+include hardware/oplus/sepolicy/mainline/SEPolicy.mk
 -include hardware/samsung-ext/interfaces/sepolicy/SEPolicy.mk
 
 # Wi-Fi (mainline ath11k_pci QCA6390 via pure-nl80211 IWifi AIDL V4 HAL)
