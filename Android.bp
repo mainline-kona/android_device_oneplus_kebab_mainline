@@ -53,6 +53,12 @@ prebuilt_etc {
     vendor: true,
 }
 
+prebuilt_etc {
+    name: "task_profiles.json",
+    src: "configs/task_profiles.json",
+    vendor: true,
+}
+
 sh_binary {
     name: "kebab-pdready.sh",
     src: "init/kebab-pdready.sh",
