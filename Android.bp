@@ -54,7 +54,8 @@ prebuilt_etc {
 }
 
 prebuilt_etc {
-    name: "task_profiles.json",
+    name: "task_profiles.kebab.json",
+    filename: "task_profiles.json",
     src: "configs/task_profiles.json",
     vendor: true,
 }

@@ -323,7 +323,7 @@ PRODUCT_PACKAGES += \
     fstab.qcom \
     init.kebab.rc \
     init.qcom.rc \
-    task_profiles.json \
+    task_profiles.kebab.json \
     ueventd.kebab.rc
 
 # Debug tools
