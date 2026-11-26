@@ -153,4 +153,6 @@ service vendor.kebab_voicecall /vendor/bin/kona-voicecall
 # max; 25s bark -> pretimeout panic governor dumps stacks to ramoops before bite).
 service watchdogd /system/bin/watchdogd 10 20
     class core
+    user root
+    group root
     seclabel u:r:watchdogd:s0
