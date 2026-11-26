@@ -135,9 +135,14 @@ void classifyZone(const std::string& zoneType, TemperatureType* outType,
         *outHot = makeHotThresholds(40.0f, 43.0f, 45.0f, 48.0f, 52.0f, 60.0f);
         return;
     }
-    if (zoneType == "skin-thermal" || zoneType == "skin-pm8150-thermal") {
+    if (zoneType == "skin-thermal") {
         *outType = TemperatureType::SKIN;
-        *outHot = makeHotThresholds(37.0f, 41.0f, 45.0f, 48.0f, 52.0f, 60.0f);
+        *outHot = makeHotThresholds(39.0f, 43.0f, 46.0f, 48.0f, 52.0f, 60.0f);
+        return;
+    }
+    if (zoneType == "skin-pm8150-thermal") {
+        *outType = TemperatureType::SKIN;
+        *outHot = makeHotThresholds(43.0f, 47.0f, 51.0f, 55.0f, 60.0f, 70.0f);
         return;
     }
     if (zoneType == "skin-msm-thermal") {
