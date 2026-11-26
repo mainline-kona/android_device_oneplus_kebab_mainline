@@ -190,6 +190,8 @@ PRODUCT_PACKAGES += \
     android.hardware.vibrator.service.oplus-richtap \
     libaacvibrator
 
+$(call soong_config_set_bool,OPLUS_LINEAGE_VIBRATOR_HAL,USES_OPLUS_AWINIC,true)
+
 # LiveDisplay: SunlightEnhancement (HBM via /sys/kernel/oplus_display/hbm)
 PRODUCT_PACKAGES += \
     vendor.lineage.livedisplay-service.oplus
@@ -233,7 +235,8 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.wifi.passpoint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.passpoint.xml
 
 PRODUCT_COPY_FILES += \
-    $(FIRMWARE_PATH)/richtap/etc/aac_richtap.config:$(TARGET_COPY_OUT_ODM)/etc/aac_richtap.config
+    $(FIRMWARE_PATH)/richtap/etc/aac_richtap.config:$(TARGET_COPY_OUT_ODM)/etc/aac_richtap.config \
+    $(call find-copy-subdir-files,*,$(FIRMWARE_PATH)/richtap/firmware/,$(TARGET_COPY_OUT_VENDOR)/firmware/)
 
 # Fingerprint: Goodix optical UDFPS AIDL HAL (G6_3 gfp9638 & G6_7 gfp9678) over QTEE
 PRODUCT_PACKAGES += \
