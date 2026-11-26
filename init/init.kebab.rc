@@ -147,3 +147,9 @@ service vendor.kebab_voicecall /vendor/bin/kona-voicecall
     user audioserver
     group audio
     disabled
+
+# Hardware APSS watchdog daemon: 10s kick, 20s margin (30s bite <= 31s qcom-wdt
+# max; 25s bark -> pretimeout panic governor dumps stacks to ramoops before bite).
+service watchdogd /system/bin/watchdogd 10 20
+    class core
+    seclabel u:r:watchdogd:s0
