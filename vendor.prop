@@ -36,6 +36,7 @@ bluetooth.hardware.power.tx_cur_ma=36
 bluetooth.hardware.power.operating_voltage_mv=3700
 bluetooth.profile.bas.client.enabled=true
 bluetooth.hfp.software_datapath.enabled=true
+bluetooth.sco.managed_by_audio=true
 
 # USB
 vendor.usb.product_string=OnePlus 8T
@@ -73,3 +74,8 @@ apexd.config.dm_create.timeout=10000
 # helper because the modem inspects the AP voice graph before the call is set
 # up; a HAL-started second instance fights the RIL one for the PCM (EBUSY).
 vendor.audio.mainline.voice_call_service=
+# Primary output FAST low-latency path: 10 ms at 48 kHz = 480 frames, an exact
+# 1:1 match with q6asm-dai's 480-frame hardware period step constraint. Enables
+# AudioFlinger FastMixer for VoLTE/VoWiFi (ImsMedia AAudio) and eliminates the
+# 1024-vs-480 period mismatch underrun/throttle loop.
+vendor.audio.mainline.fast_latency_ms=10
