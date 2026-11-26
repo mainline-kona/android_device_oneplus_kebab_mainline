@@ -152,7 +152,7 @@ void classifyZone(const std::string& zoneType, TemperatureType* outType,
     }
     if (zoneType == "conn-thermal" || zoneType.find("usb") != std::string::npos) {
         *outType = TemperatureType::USB_PORT;
-        *outHot = makeHotThresholds(45.0f, 50.0f, 55.0f, 60.0f, 65.0f, 75.0f);
+        *outHot = makeHotThresholds(50.0f, 55.0f, 60.0f, 65.0f, 70.0f, 75.0f);
         return;
     }
     if (zoneType.rfind("pa", 0) == 0 && zoneType.find("therm") != std::string::npos) {
