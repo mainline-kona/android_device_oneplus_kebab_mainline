@@ -291,6 +291,7 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_SYSTEM_PROPERTIES += \
     ro.adb.secure=0 \
+    log.tag.drmhwc=I \
     log.tag.GnssAidl=V \
     log.tag.GnssPsdsAidl=V \
     log.tag.AGnssAidl=V \
