@@ -399,4 +399,16 @@
         <item>95</item>   <!-- <item>sensorRadius</item> -->
     </integer-array>
 
+    <!-- OnePlus 8T AW8697 RichTap X-axis LRA haptic feedback & intensity defaults -->
+    <bool name="config_enableHapticTextHandle">true</bool>
+    <integer name="config_defaultAlarmVibrationIntensity">3</integer>
+    <integer name="config_defaultHapticFeedbackIntensity">3</integer>
+    <integer name="config_defaultMediaVibrationIntensity">3</integer>
+    <integer name="config_defaultNotificationVibrationIntensity">3</integer>
+    <integer name="config_defaultRingVibrationIntensity">3</integer>
+    <integer name="config_defaultKeyboardVibrationIntensity">3</integer>
+    <bool name="config_keyboardVibrationSettingsSupported">true</bool>
+    <bool name="config_keyboardVibrationSettingsIntensitySupported">true</bool>
+    <bool name="config_ringtoneVibrationSettingsSupported">true</bool>
+
 </resources>

@@ -77,6 +77,9 @@ class Vibrator : public BnVibrator {
     struct RichTapApi {
         void* handle = nullptr;
         int (*init)(int32_t* out) = nullptr;
+        void (*looperStart)() = nullptr;
+        int32_t (*looperOn)(uint32_t timeoutMs) = nullptr;
+        int32_t (*looperPrebakedEffect)(uint32_t effectId, int32_t strength) = nullptr;
         int (*on)(uint32_t timeoutMs) = nullptr;
         int (*stop)(int32_t* out) = nullptr;
         int (*setAmplitude)(uint8_t amplitude) = nullptr;
@@ -87,10 +90,17 @@ class Vibrator : public BnVibrator {
 
     bool loadRichTap();
     float readResonantFrequencyHz() const;
-    void stopActiveLocked() REQUIRES(mMutex);
+    void cancelPendingLocked() REQUIRES(mMutex);
+    void beginVibrationLocked() REQUIRES(mMutex);
+    void endVibrationLocked() REQUIRES(mMutex);
+    void applyFullAmplitudeLocked() REQUIRES(mMutex);
+    int32_t playPrebakedLocked(uint32_t effectId, int32_t strength, int32_t fallbackMs)
+            REQUIRES(mMutex);
+    int32_t playOnLocked(uint32_t timeoutMs) REQUIRES(mMutex);
     void scheduleAsyncLocked(uint64_t seq, std::function<void(uint64_t)> task) REQUIRES(mMutex);
     bool waitCancellable(uint64_t seq, int32_t delayMs);
-    void finishCallback(uint64_t seq, const std::shared_ptr<IVibratorCallback>& callback);
+    void finishCallback(uint64_t seq, const std::shared_ptr<IVibratorCallback>& callback,
+                        bool restoreAmplitude = false);
     void workerLoop();
 
     static int32_t strengthToAmplitude(EffectStrength strength);
@@ -106,7 +116,10 @@ class Vibrator : public BnVibrator {
     bool mActive GUARDED_BY(mMutex) = false;
     bool mHasTask GUARDED_BY(mMutex) = false;
     std::function<void(uint64_t)> mPendingTask GUARDED_BY(mMutex);
-    uint8_t mAmplitude GUARDED_BY(mMutex) = 255;
+    float mCurrentAmplitude GUARDED_BY(mMutex) = 1.0f;
+    float mPeakAmplitude GUARDED_BY(mMutex) = 1.0f;
+    bool mAmplitudeSetSinceStart GUARDED_BY(mMutex) = false;
+    bool mAmplitudeSetForEffect GUARDED_BY(mMutex) = false;
     std::shared_ptr<IVibratorCallback> mGlobalCallback GUARDED_BY(mMutex);
     std::thread mWorker;
 };

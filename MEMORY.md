@@ -1,6 +1,6 @@
 # OnePlus 8T (`kebab`, SM8250) Mainline LineageOS 24.0 (Android 17) — Session Memory & Handoff
 
-*Last updated: 2026-11-25*
+*Last updated: 2026-11-26*
 
 ---
 
@@ -8,16 +8,16 @@
 
 - **Device**: OnePlus 8T (`kebab`, SM8250 / Kona + external Qualcomm SDX55 5G modem over PCIe2/MHI)
 - **ROM**: LineageOS 24.0 (Android 17) at `/serverhive5/zenzer0s/los`
-- **Device Tree**: `/serverhive5/zenzer0s/los/device/oneplus/kebab_mainline` (branch `main`)
-- **RIL Repo**: `/serverhive5/zenzer0s/los/hardware/mainline/kona-ril` (branch `empty`, HEAD `8d962cc`)
-- **Kernel**: `/serverhive5/zenzer0s/mainline-kona` (branch `android17-6.18-lts-8t`, ACK `android17-6.18-lts`, HEAD `1734a29f39c9`)
+- **Device Tree**: `/serverhive5/zenzer0s/los/device/oneplus/kebab_mainline` (branch `main`, HEAD `bc04e62`)
+- **RIL Repo**: `/serverhive5/zenzer0s/los/hardware/mainline/kona-ril` (branch `empty`, HEAD `02a3d5b`)
+- **Kernel**: `/serverhive5/zenzer0s/mainline-kona` (branch `android17-6.18-lts-8t`, ACK `android17-6.18-lts`, HEAD `86a20e7f8545`)
 - **Reference Trees**:
   - Stock kebab kernel/DTS: `/serverhive5/zenzer0s/ref-stock-kebab`
   - Mainline reference: `/serverhive5/zenzer0s/mainline-kona-ref`
   - Stock vendor dump: `/serverhive5/zenzer0s/stock-vendor`
 - **Live ADB Command**:
   ```bash
-  export ADB_SERVER_SOCKET=tcp:127.0.0.1:5052
+  export ADB_SERVER_SOCKET=tcp:127.0.0.1:5053
   /usr/bin/adb ...   # device serial 3b158d06
   ```
 - **Trackers**:
@@ -60,30 +60,36 @@
 
 ---
 
-## 3. Committed Locally & Ready to Build/Flash Next (NOT Yet Flashed)
+## 3. Recent Live-Verified Fixes & Ready to Flash Next
 
-Three local commits are ready to build & flash (`boot.img` + `vendor.img`):
+### Live-Verified on Phone (`6.18.63-mainline-gc224a9c6d728`)
+1. **DSDS Dual-SIM + Dual IMEI/IMEI SV (`17`) + Full Baseband (`kona-ril` `8d962cc`, `66b6135`, `02a3d5b` + `kebab_mainline` `b9b1466`, `1a617d8`) — LIVE-VERIFIED!**
+   - `com.android.phone` rock-solid > 1 hr with zero crashes (`ro.telephony.sim_slots.count=2` + `config_num_physical_slots=2` fixed `UiccController:1162 AIOOBE`).
+   - `gsm.version.baseband = MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1,MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1`, real `slot0` + `slot1` IMEIs + `imeisv=17`, Jio `NR_SA` + `rmnet_data0`/`rmnet_data1` (IMS) up.
+2. **Deep Sleep (`s2idle`) Fixes (`mainline-kona` `1a832994137e`, `ada17b334f19` + `kebab_mainline` `b890718`, `1a617d8`)**:
+   - `fastrpc.c` `wait_event_freezable()`, SDX55 MHI `poll_work` suspend/resume + PME wakeup, DWC3 host-only wakelock (`pm_stay_awake`/`pm_relax`), `camcc-sm8250` runtime PM, `synaptics_s3908` `tcm_pm_ops` (`disable_irq`/`enable_irq`), `TARGET_SUPPORTS_SUSPEND := true`, dropped `clk_ignore_unused pd_ignore_unused regulator_ignore_unused`. (Still need unplugged/forced `AOSD`/`CXSD` count verification.)
 
-1. **`hardware/mainline/kona-ril` (`8d962cc`) — Fix real IMEI/IMEI SV (`17`) & full Baseband version**:
-   - Removed Cuttlefish's hardcoded fake `RefRadioModem::getImei()` override (`"867400022047199"` / `"01"`), so `RadioModem::getImei()` delegates directly to our real QMI DMS `requestDeviceIdentity()` (real SDX55 IMEI + IMEI SV **`17`**).
-   - Fixed `qmiDmsGetBasebandVersion()` to trim trailing `.build` suffix after `PACK-<n>` when `> 45` chars so Android `GsmCdmaPhone` (`PROP_VALUE_MAX / 2 = 45`) stops front-truncating `"MPSS.HI.2"` — now displays full **`MPSS.HI.2.5-01066-SDX55_RMTEFS_PACK-1`**.
-2. **`hardware/mainline/kona-ril` (`66b6135`) + `device/oneplus/kebab_mainline` (`b9b1466`) — Enable DSDS (`slot1` + `slot2`) with real dual IMEI/SV & dual UIM slot status**:
-   - Enabled `-DSIM_COUNT=2 -DANDROID_MULTI_SIM` across `libcuttlefish-rild`, `libril-modem-lib`, and `libcuttlefish-ril-2`; declared `slot2` VINTF instances for all 8 per-slot radio HALs in `radio-kona.xml` and set `persist.radio.multisim.config=dsds` in `vendor.prop`.
-   - Fixed 4 upstream Cuttlefish `SIM_COUNT >= 2` bugs in `ril_service.cpp` (`osAppIdVec` undeclared, duplicate `IImsMedia/default` registration in loop, duplicate `compat::RadioModem`/`compat::RadioSim` publication, off-by-one `getRadioServiceRwlock(slotId)`).
-   - Implemented `qmiDmsGetSerialNumbersForSlot()` (`QMI_DMS_BIND_SUBSCRIPTION 0x0054` primary=1 / secondary=2 + `QMI_DMS_GET_DEVICE_SERIAL_NUMBERS 0x0025` over a single QRTR socket → real IMEI 1 + IMEI 2 + IMEI SV `17`), `qmiUimGetSlotsStatus()` (`QMI_UIM_GET_SLOTS_STATUS 0x0047` TLV `0x10` for both physical slots), and an AT-free `onRequestSlot2()` handler so slot 1 5G/LTE/IMS stays completely isolated.
-   - Compile-verified all 11 `kona-ril` translation units cleanly with `-DSIM_COUNT=2 -DANDROID_MULTI_SIM`.
-3. **`mainline-kona` (`1a832994137e`) + `device/oneplus/kebab_mainline` (`device.mk`) — Fix Deep Sleep (`s2idle`)**:
-   - **`drivers/misc/fastrpc.c`**: Replaced `wait_for_completion_interruptible()` with `wait_event_freezable()` (`TASK_INTERRUPTIBLE | TASK_FREEZABLE`) so PM task freezing freezes `hexagonrpcd-sdsp`/`adsp` cleanly in place instead of waking with `-ERESTARTSYS` and crashing SLPI/ADSP (`EX:sensor_process:0x1:frpc_dsp`) + deadlocking `rproc_recovery_wq`.
-   - **`drivers/bus/mhi/host/pci_generic.c`**: Paused/cancelled SDX55's 1-jiffy `poll_work` on `mhi_pci_runtime_suspend()` (restarting before `mhi_pm_resume()`), eliminating the 250 Hz non-freezable timer that blocked `s2idle` / `cluster_sleep_0` and touched PCIe MMIO while suspended, and enabled PCIe PME wakeup on `mhi_oneplus_sdx55_info`.
-   - **`drivers/usb/dwc3/gadget.c`**: Held `pm_stay_awake(dwc->dev)` only while actively enumerated by a USB data host (`conndone`/`wakeup`), relaxing on disconnect, USB bus suspend (`U3`), soft-disconnect, and gadget exit so ADB/MTP never drops while battery & wall-charger states enter deep sleep normally.
-   - **`drivers/clk/qcom/camcc-sm8250.c`**: Added runtime PM (`devm_pm_runtime_enable` / `pm_runtime_resume_and_get` / `pm_runtime_put`) matching `videocc`/`dispcc` so `ad00000.clock-controller` releases its permanent `RPMHPD_MMCX` `low_svs` vote.
-   - **`device/oneplus/kebab_mainline/device.mk`**: Switched `TARGET_SUPPORTS_SUSPEND := true` (removes `/vendor/bin/suspend_blocker`).
+### Committed Locally & Ready to Build/Flash Next (`boot.img` + `vendor.img`)
+1. **`mainline-kona` (`86a20e7f8545`) — Fix Wi-Fi scan filtering bug in `ath11k` (`drivers/net/wireless/ath/ath11k/wmi.c`) — LIVE-VERIFIED**:
+   - Populates `status->boottime_ns = ktime_get_boottime_ns()` for beacons and probe responses in `ath11k_mgmt_rx_event()`, matching `ath10k_wmi_event_mgmt_rx()`.
+2. **`los/hardware/mainline/kona-ril` (`f37fda2`) — Fix QMI UIM logical channel leak (`0x0044`) breaking IMS/VoWiFi AKA auth**:
+   - Persistent QRTR socket `s_qmiUimFd` + txn/indication filtering + `0x0044` reclaim/retry in `reference-ril.c`.
+3. **RichTap Haptics Crispness & Sync Fixes (`mainline-kona` + `kebab_mainline`)**:
+   - **`mainline-kona` (`aw8695-haptics.c` + `sm8250-oneplus-kebab.dts`)**:
+     - Switch AW8697 boost peak current limit from `2.0A` to stock `3.5A` (`AW8695_BSTCFG_PEAKCUR_3P5A`).
+     - Restore factory laser-trimmed eFuse 24 MHz oscillator (`AW8695_ANACTRL_LRA_SRC_EFUSE`) for RichTap RTP/Stream playback instead of writing `TRIM_LRA=0` while `LRA_SRC_REG` was left stuck from `aw8695_haptic_get_f0()`, and disable LPF (`AW8695_DATCTRL_LPF_DISABLE`) after f0 detection.
+     - Add FIFO-aware `aw8695_rtp_write_fifo()` (512B chunks, `FF_AFS` pacing for >2 KB payloads), faster 500 us standby poll, and skip IRQ I2C access while `haptic_rtp_mode` is active.
+     - Fix OnePlus 8T AW8697 IRQ pin in `sm8250-oneplus-kebab.dts` from `gpio118` (8/8Pro) to `gpio11`.
+   - **`kebab_mainline` (`vibrator/Vibrator.{h,cpp}` + `OPlusFrameworksResTarget` / `OPlusSystemUIResTarget`)**:
+     - Sync with stock `hardware/oplus` RichTap HAL: start `aac_vibra_looper_start()`, use `aac_vibra_looper_prebaked_effect()` / `aac_vibra_looper_on()`, fix exact `aac_richtap.config` IDs/durations (`DOUBLE_CLICK=0x1001/85ms`, `THUD=0x3001/36ms`, `HEAVY_CLICK/SLOW_RISE=0x3002/30ms`, `POP/SPIN=0x3004/24ms`, `CLICK=0x3009/12ms`, `TICK=0x300a/12ms`, `LIGHT_TICK=0x300b/11ms`, `NOOP=0ms`), unity-gain strengths (`50/80/100`), full-amplitude reset before effects, drop fake `CAP_GET_Q_FACTOR`, and stop calling `aac_vibra_stop()` before every click.
+     - Add `kRtpPipelineMarginMs` (15 ms) before firing `callback->onComplete()` on short RTP bursts so `VibratorManagerService`'s trailing `off()` -> `RICHTAP_STOP_MODE` never cuts off the active braking tail mid-waveform.
+     - Add stock OnePlus 8T haptic intensity/keyboard/text-handle/icon-animation RRO configs.
 
-**Next Build Command for User (`boot.img` + `vendor.img`)**:
+**Next Build Commands for User (`boot.img` + `vendor.img`)**:
 ```bash
 m bootimage vendorimage
 ```
-(then flash `boot.img` + `vendor.img`).
+(then flash `boot.img` and `vendor.img`).
 
 ---
 

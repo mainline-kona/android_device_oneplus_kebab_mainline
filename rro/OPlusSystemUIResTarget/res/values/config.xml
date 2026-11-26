@@ -12,4 +12,7 @@
 
     <!-- OnePlus 8T factory-calibrated warm-white optical illumination color for Goodix gfp9638 -->
     <color name="config_udfpsColor">#ffffe6</color>
+
+    <!-- Subtle shelf icon haptics supported by AW8697 RichTap X-axis LRA -->
+    <bool name="config_vibrateOnIconAnimation">true</bool>
 </resources>
