@@ -60,7 +60,7 @@ persist.vendor.fingerprint.sensor_location=540|1897|95
 persist.vendor.fingerprint.type=udfps
 
 # AAC RichTap X-axis LRA haptics (AW8697)
-vendor.aac_richtap.config.path=/vendor/etc/aac_richtap.config
+vendor.aac_richtap.config.path=/odm/etc/aac_richtap.config
 vendor.aac_richtap.device.path=/dev/awinic_haptic
 
 # Gatekeeper (use TEE keymaster64, SM8250 has no SPU)

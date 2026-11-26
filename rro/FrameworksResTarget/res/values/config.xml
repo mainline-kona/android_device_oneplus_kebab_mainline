@@ -68,14 +68,19 @@
     <!-- Default value for fp screen off unlock toggle (set to true to enable by default) -->
     <bool name="config_screen_off_udfps_default_on">false</bool>
 
+    <!-- Whether the device supports double tap to wake (via power-ext-oplus) -->
+    <bool name="config_supportDoubleTapWake">true</bool>
+
     <!-- Paths to the libraries that contain device specific key handlers -->
     <string-array name="config_deviceKeyHandlerLibs" translatable="false">
         <item>/system_ext/app/KeyHandler/KeyHandler.apk</item>
+        <item>/system_ext/priv-app/LineageParts/LineageParts.apk</item>
     </string-array>
 
     <!-- Names of the key handler classes -->
     <string-array name="config_deviceKeyHandlerClasses" translatable="false">
         <item>org.lineageos.settings.device.KeyHandler</item>
+        <item>org.lineageos.lineageparts.gestures.KeyHandler</item>
     </string-array>
 
     <!-- Qualcomm XTRA3 Long-Term PSDS servers for SDX55 modem GNSS assistance -->

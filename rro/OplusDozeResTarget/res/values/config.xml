@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2026 The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!-- Sensor types (backed by mainline libssc proximity sensor) -->
+    <string name="pocket_sensor_type">android.sensor.proximity</string>
+
+    <!-- Sensor trigger values -->
+    <item name="pocket_sensor_value" format="float" type="dimen">0.0</item>
+</resources>

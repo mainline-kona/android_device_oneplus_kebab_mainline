@@ -11,12 +11,14 @@ FIRMWARE_PATH ?= device/oneplus/kebab_mainline-firmware
 # optional sensors-hal_mainline module.
 TARGET_SENSORS_HAL := mainline
 
-# Vibrator: AAC RichTap X-axis LRA AIDL V4 HAL over AW8697 /dev/awinic_haptic
-# (replaces optional vibrator-hal_mainline APEX).
+# Vibrator: AAC RichTap X-axis LRA AIDL HAL over AW8697 /dev/awinic_haptic
+# via hardware/oplus/aidl/vibrator/richtap (replaces optional vibrator-hal_mainline APEX).
 TARGET_VIBRATOR_HAL := richtap
 
 # Power: LineageOS libperfmgr AIDL HAL with ADPF + mainline cpufreq/devfreq/uclamp powerhint.json
+# + hardware/oplus power-ext-oplus for Mode::DOUBLE_TAP_TO_WAKE
 TARGET_POWER_HAL := perfmgr-lineage
+$(call soong_config_set,power_libperfmgr,mode_extension_lib,//hardware/oplus:power-ext-oplus)
 
 TARGET_BOARD_PLATFORM := qcom
 TARGET_QCOM_SOC := sm8250
@@ -183,9 +185,44 @@ PRODUCT_COPY_FILES += \
     $(FIRMWARE_PATH)/qtee/lib64/libqcbor.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libqcbor.so \
     $(FIRMWARE_PATH)/qtee/lib64/libspcom.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libspcom.so
 
-# Vibrator: AAC RichTap X-axis LRA AIDL V4 HAL (AW8697 /dev/awinic_haptic)
+# Vibrator: AAC RichTap X-axis LRA AIDL HAL (hardware/oplus/aidl/vibrator/richtap)
 PRODUCT_PACKAGES += \
-    android.hardware.vibrator-service.kebab
+    android.hardware.vibrator.service.oplus-richtap \
+    libaacvibrator
+
+# LiveDisplay: SunlightEnhancement (HBM via /sys/kernel/oplus_display/hbm)
+PRODUCT_PACKAGES += \
+    vendor.lineage.livedisplay-service.oplus
+
+$(call soong_config_set_bool,OPLUS_LINEAGE_LIVEDISPLAY_HAL,ENABLE_AB,false)
+$(call soong_config_set_bool,OPLUS_LINEAGE_LIVEDISPLAY_HAL,ENABLE_AF,false)
+$(call soong_config_set_bool,OPLUS_LINEAGE_LIVEDISPLAY_HAL,ENABLE_DM,false)
+$(call soong_config_set_bool,OPLUS_LINEAGE_LIVEDISPLAY_HAL,ENABLE_SE,true)
+
+# Touch: Screen-off gestures + 240 Hz High Touch Polling Rate (/proc/touchpanel/*)
+PRODUCT_PACKAGES += \
+    vendor.lineage.touch-service.oplus
+
+$(call soong_config_set,OPLUS_LINEAGE_TOUCH_HAL,INCLUDE_DIR,$(DEVICE_PATH)/touch/include)
+$(call soong_config_set_bool,OPLUS_LINEAGE_TOUCH_HAL,ENABLE_GM,false)
+$(call soong_config_set_bool,OPLUS_LINEAGE_TOUCH_HAL,ENABLE_HTPR,true)
+$(call soong_config_set_bool,OPLUS_LINEAGE_TOUCH_HAL,ENABLE_TG,true)
+
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
+    frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.accelerometer.xml \
+    frameworks/native/data/etc/android.hardware.sensor.compass.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.compass.xml \
+    frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.gyroscope.xml \
+    frameworks/native/data/etc/android.hardware.sensor.light.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.light.xml \
+    frameworks/native/data/etc/android.hardware.sensor.proximity.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.proximity.xml
+
+# OPlus packages & framework stubs (Alert Slider KeyHandler, Doze, oplus-fwk)
+PRODUCT_PACKAGES += \
+    KeyHandler \
+    OplusDoze \
+    tri-state-key-calibrate
+
+$(call inherit-product, hardware/oplus/oplus-fwk/oplus-fwk.mk)
 
 # Wi-Fi: AIDL V4 IWifi HAL over mainline ath11k_pci (pure nl80211 libwifi-hal-desktop)
 PRODUCT_PACKAGES += \
@@ -196,8 +233,7 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.wifi.passpoint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.passpoint.xml
 
 PRODUCT_COPY_FILES += \
-    $(FIRMWARE_PATH)/richtap/lib64/libaacvibrator.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libaacvibrator.so \
-    $(FIRMWARE_PATH)/richtap/etc/aac_richtap.config:$(TARGET_COPY_OUT_VENDOR)/etc/aac_richtap.config
+    $(FIRMWARE_PATH)/richtap/etc/aac_richtap.config:$(TARGET_COPY_OUT_ODM)/etc/aac_richtap.config
 
 # Fingerprint: Goodix optical UDFPS AIDL HAL (G6_3 gfp9638 & G6_7 gfp9678) over QTEE
 PRODUCT_PACKAGES += \
@@ -338,10 +374,13 @@ TARGET_ENABLE_SELOGGER := true
 PRODUCT_PACKAGES += \
     KebabMainlineFrameworksResTarget \
     KebabMainlineKeyHandlerResTarget \
+    KebabMainlineLineageSDKResTarget \
+    KebabMainlineLineageSettingsProviderResTarget \
     KebabMainlineOPlusFrameworksResTarget \
     KebabMainlineOPlusSettingsProviderResTarget \
     KebabMainlineOPlusSettingsResTarget \
     KebabMainlineOPlusSystemUIResTarget \
+    KebabMainlineOplusDozeResTarget \
     KebabMainlineWifiResTarget
 
 # Scoped storage
@@ -353,5 +392,6 @@ TARGET_FOLLOWS_LATEST_SHIPPING_API_LEVEL := true
 # Soong namespaces
 PRODUCT_SOONG_NAMESPACES += \
     $(DEVICE_PATH) \
+    hardware/oplus \
     hardware/mainline/common \
     external/mainline-hw-deps
