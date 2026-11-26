@@ -14,6 +14,9 @@ vendor.hwc.drm.device=/dev/dri/card2
 # for "android framework", satisfying Android 17 HWUI's kRequestedQueueCount=2.
 debug.hwui.renderer=skiavk
 debug.renderengine.backend=skiavkthreaded
+# Enable ADPF CPU hint sessions for SurfaceFlinger and HWUI RenderThreads
+debug.sf.enable_adpf_cpu_hint=true
+debug.hwui.use_hint_manager=true
 
 # Light
 vendor.light.backlight.disable=false
