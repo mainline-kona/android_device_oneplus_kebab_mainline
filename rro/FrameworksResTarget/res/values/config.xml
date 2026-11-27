@@ -10,6 +10,10 @@
          states. -->
     <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
 
+    <!-- Mainline sensors HAL does not expose a hardware SIGNIFICANT_MOTION sensor;
+         allow Deep Doze to step into IDLE without requiring one. -->
+    <bool name="config_autoPowerModeUseMotionSensor">false</bool>
+
     <!-- Whether a software navigation bar should be shown. NOTE: in the future this may be
          autodetected from the Configuration. -->
     <bool name="config_showNavigationBar">true</bool>
