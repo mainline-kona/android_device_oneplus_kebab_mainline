@@ -192,14 +192,22 @@ PRODUCT_PACKAGES += \
 
 $(call soong_config_set_bool,OPLUS_LINEAGE_VIBRATOR_HAL,USES_OPLUS_AWINIC,true)
 
-# LiveDisplay: SunlightEnhancement (HBM via /sys/kernel/oplus_display/hbm)
-PRODUCT_PACKAGES += \
-    vendor.lineage.livedisplay-service.oplus
+# Display: Stock OnePlus 8T DisplayDeviceConfig (nits curve + native Android HBM > 8000 lux / HDR)
+# Mainline drmfb reports StablePhysical{id=0, port=0} ("local:0"), so install the stock
+# AMB655X XML under display_id_0.xml / display_port_0.xml / default.xml as well as the stock ID.
+PRODUCT_COPY_FILES += \
+    $(DEVICE_PATH)/configs/displayconfig/display_id_4630946950956839809.xml:$(TARGET_COPY_OUT_VENDOR)/etc/displayconfig/display_id_4630946950956839809.xml \
+    $(DEVICE_PATH)/configs/displayconfig/display_id_4630946950956839809.xml:$(TARGET_COPY_OUT_VENDOR)/etc/displayconfig/display_id_0.xml \
+    $(DEVICE_PATH)/configs/displayconfig/display_id_4630946950956839809.xml:$(TARGET_COPY_OUT_VENDOR)/etc/displayconfig/display_port_0.xml \
+    $(DEVICE_PATH)/configs/displayconfig/display_id_4630946950956839809.xml:$(TARGET_COPY_OUT_VENDOR)/etc/displayconfig/display_config.xml \
+    $(DEVICE_PATH)/configs/displayconfig/display_id_4630946950956839809.xml:$(TARGET_COPY_OUT_VENDOR)/etc/displayconfig/default.xml
 
+# LiveDisplay: Disabled — native Android HighBrightnessModeController via DisplayDeviceConfig
+# replaces SunlightEnhancement (matches stock device-kebab ENABLE_SE=false).
 $(call soong_config_set_bool,OPLUS_LINEAGE_LIVEDISPLAY_HAL,ENABLE_AB,false)
 $(call soong_config_set_bool,OPLUS_LINEAGE_LIVEDISPLAY_HAL,ENABLE_AF,false)
 $(call soong_config_set_bool,OPLUS_LINEAGE_LIVEDISPLAY_HAL,ENABLE_DM,false)
-$(call soong_config_set_bool,OPLUS_LINEAGE_LIVEDISPLAY_HAL,ENABLE_SE,true)
+$(call soong_config_set_bool,OPLUS_LINEAGE_LIVEDISPLAY_HAL,ENABLE_SE,false)
 
 # Touch: Screen-off gestures + 240 Hz High Touch Polling Rate (/proc/touchpanel/*)
 PRODUCT_PACKAGES += \
