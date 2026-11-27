@@ -24,6 +24,10 @@ TARGET_BOARD_PLATFORM := qcom
 TARGET_QCOM_SOC := sm8250
 TARGET_GRAPHICS := mesa
 TARGET_BOOT_HAL := qcom-caf-aidl
+# Enable mainline-common A/B OTA definitions (update_engine, update_engine_sideload,
+# update_verifier, otapreopt_script, AB_OTA_POSTINSTALL_CONFIG) before inheriting
+# mainline_qcom-common.mk since BoardConfig.mk is parsed after device.mk.
+TARGET_USES_MAINLINE_COMMON_AB_DEFS := true
 
 TARGET_LIGHT_HAL_SCAN_FOR_BACKLIGHT_DEVICES := true
 
@@ -58,10 +62,10 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.v4l2_codec2.encode_concurrent_instances=8 \
     debug.stagefright.c2-poolmask=0x1f50000
 
-# A/B
+# A/B & Virtual A/B recovery support
 PRODUCT_PACKAGES += \
     checkpoint_gc \
-    otapreopt_script \
+    snapuserd.recovery \
     linux_firmware_qcom-a650
 
 # Graphics (Mesa Turnip Vulkan 1.3 on Adreno 650)
@@ -294,9 +298,7 @@ PRODUCT_COPY_FILES += \
 
 # Recovery helpers
 PRODUCT_COPY_FILES += \
-    $(DEVICE_PATH)/init/firmware_mount_bind.sh:$(TARGET_COPY_OUT_RECOVERY)/root/system/bin/firmware_mount_bind.sh \
     $(DEVICE_PATH)/init/usb_gadget_bind.sh:$(TARGET_COPY_OUT_RECOVERY)/root/system/bin/usb_gadget_bind.sh \
-    $(DEVICE_PATH)/init/init.recovery.qcom.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.qcom.rc \
     $(DEVICE_PATH)/init/init.recovery.qcom.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.kebab.rc
 
 # Firmware
@@ -333,8 +335,7 @@ PRODUCT_COPY_FILES += \
     $(FIRMWARE_PATH)/qcom/sm8250/OnePlus/kebab/a650_zap.mbn:$(TARGET_COPY_OUT_RAMDISK)/lib/firmware/qcom/sm8250/OnePlus/kebab/a650_zap.mbn \
     $(FIRMWARE_PATH)/qcom/sm8250/OnePlus/kebab/a650_zap.mbn:$(TARGET_COPY_OUT_RECOVERY)/root/lib/firmware/qcom/sm8250/OnePlus/kebab/a650_zap.mbn \
     $(FIRMWARE_PATH)/adb_keys:$(TARGET_COPY_OUT_RAMDISK)/adb_keys \
-    $(FIRMWARE_PATH)/adb_keys:$(TARGET_COPY_OUT_RECOVERY)/root/adb_keys \
-    $(FIRMWARE_PATH)/adb_keys:$(TARGET_COPY_OUT_PRODUCT)/etc/security/adbd_keys
+    $(FIRMWARE_PATH)/adb_keys:$(TARGET_COPY_OUT_PRODUCT)/etc/security/adb_keys
 
 PRODUCT_SYSTEM_PROPERTIES += \
     ro.adb.secure=0 \

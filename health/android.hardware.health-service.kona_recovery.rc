@@ -5,3 +5,13 @@ service vendor.health-default /system/bin/hw/android.hardware.health-service.kon
     group system
     capabilities WAKE_ALARM BLOCK_SUSPEND
     file /dev/kmsg w
+
+service charger /system/bin/hw/android.hardware.health-service.kona_recovery --charger
+    override
+    class charger
+    critical
+    seclabel u:r:charger:s0
+    user root
+    group system wakelock input
+    capabilities SYS_BOOT
+    file /dev/kmsg w

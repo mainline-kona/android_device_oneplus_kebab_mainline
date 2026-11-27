@@ -1,11 +1,4 @@
-# OnePlus 8T (kebab) Mainline Linux 7.2.0 - DSP Remoteproc & USB Gadget Service
-service fw_mount_service /system/bin/sh /system/bin/firmware_mount_bind.sh
-    disabled
-    oneshot
-    user root
-    group root
-    seclabel u:r:recovery:s0
-
+# OnePlus 8T (kebab) Mainline Linux - Recovery & Fastbootd Init
 service usb_bind_service /system/bin/sh /system/bin/usb_gadget_bind.sh
     disabled
     oneshot
@@ -17,28 +10,35 @@ on early-init
     setprop sys.usb.controller a600000.usb
     setprop vendor.usb.controller a600000.usb
     setprop sys.usb.configfs 1
+    setprop ro.adb.secure.recovery 0
 
 on init
-    setprop sys.usb.controller a600000.usb
-    setprop vendor.usb.controller a600000.usb
+    # Remove build-time dangling symlink (-> /product/etc/security/adb_keys) so
+    # recovery's copy_userdata_files() can copy /data/misc/adb/adb_keys cleanly.
+    rm /adb_keys
 
 on fs
     wait /dev/block/platform/soc@0/1d84000.ufshc 2
     symlink /dev/block/platform/soc@0/1d84000.ufshc /dev/block/bootdevice
     symlink /dev/block/platform/soc@0/1d84000.ufshc/by-name /dev/block/by-name
-    exec_background u:r:recovery:s0 -- /system/bin/sh /system/bin/firmware_mount_bind.sh
-    start fw_mount_service
 
 on post-fs
-    start fw_mount_service
     start usb_bind_service
 
 on boot
-    setprop sys.usb.controller a600000.usb
-    setprop vendor.usb.controller a600000.usb
-    setprop sys.usb.configfs 1
-    setprop ro.debuggable 1
-    setprop ro.adb.secure 0
-    exec_background u:r:recovery:s0 -- /system/bin/sh /system/bin/firmware_mount_bind.sh
-    start fw_mount_service
-    start usb_bind_service
+    # Start early_hal services (vendor.boot-qti / IBootControl) after block
+    # symlinks are ready so fastbootd and update_engine_sideload never race.
+    class_start early_hal
+
+on charger
+    class_start charger
+
+on shutdown
+    # Unbind USB gadget and stop fastbootd/adbd before LINUX_REBOOT_CMD_RESTART2.
+    # Init skips service teardown in recovery when /data is unmounted, leaving
+    # FunctionFS endpoints bound during dwc3_qcom_remove() otherwise.
+    write /config/usb_gadget/g1/UDC "none"
+    stop fastbootd
+    stop adbd
+    setprop sys.usb.ffs.ready 0
+    rm /config/usb_gadget/g1/configs/b.1/f1

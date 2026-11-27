@@ -17,8 +17,9 @@ odm         /odm         ext4  ro,barrier=1,discard wait,slotselect,logical,firs
 
 /dev/block/by-name/metadata /metadata ext4 noatime,nosuid,nodev,discard,sync wait,check,formattable,first_stage_mount
 
-/dev/block/by-name/boot     /boot   emmc defaults defaults
-/dev/block/by-name/misc     /misc   emmc defaults defaults
+/dev/block/by-name/boot     /boot     emmc defaults slotselect
+/dev/block/by-name/recovery /recovery emmc defaults slotselect
+/dev/block/by-name/misc     /misc     emmc defaults defaults
 /dev/block/by-name/modem    /vendor/firmware_mnt vfat ro,context=u:object_r:firmware_mnt_file:s0,shortname=lower,uid=1000,gid=1000,dmask=227,fmask=337 wait,slotselect
 /dev/block/by-name/dsp      /vendor/dsp ext4 ro,nosuid,nodev,barrier=1 wait,slotselect
 /dev/block/by-name/persist  /mnt/vendor/persist ext4 noatime,nosuid,nodev,barrier=1 wait,first_stage_mount
@@ -26,10 +27,8 @@ odm         /odm         ext4  ro,barrier=1,discard wait,slotselect,logical,firs
 # Mainline has no hardware-wrapped keys or dm-default-key, so data uses plain FBE
 /dev/block/by-name/userdata /data f2fs noatime,nosuid,nodev,discard,reserve_root=32768,resgid=1065 latemount,wait,check,formattable,fileencryption=aes-256-xts:aes-256-cts:v2,quota,reservedsize=128M,checkpoint=fs
 /dev/block/by-name/userdata /data ext4 noatime,nosuid,nodev,discard,barrier=1 latemount,wait,check,formattable,fileencryption=aes-256-xts:aes-256-cts:v2,quota,reservedsize=128M
-/dev/block/bootdevice/by-name/userdata /data f2fs noatime,nosuid,nodev,discard,reserve_root=32768,resgid=1065 latemount,wait,check,formattable,fileencryption=aes-256-xts:aes-256-cts:v2,quota,reservedsize=128M,checkpoint=fs
-/dev/block/bootdevice/by-name/userdata /data ext4 noatime,nosuid,nodev,discard,barrier=1 latemount,wait,check,formattable,fileencryption=aes-256-xts:aes-256-cts:v2,quota,reservedsize=128M
 
-/devices/platform/soc@0/a600000.usb/* auto auto nosuid,nodev wait,voldmanaged=usb:auto
+/devices/platform/soc@0/a6f8800.usb/a600000.usb/* auto auto nosuid,nodev wait,voldmanaged=usb:auto
 
 # zram swap (set up by swapon_all in init.kebab.rc once boot completes)
 /dev/block/zram0 none swap defaults zramsize=50%
