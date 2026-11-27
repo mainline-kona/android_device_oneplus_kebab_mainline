@@ -13,6 +13,8 @@ on early-init
     mkdir /metadata/bringup 0777 root root
 
 on init
+    # init.rc zeroes hung_task_timeout_secs; re-enable so boot stalls log stack traces
+    write /proc/sys/kernel/hung_task_timeout_secs 30
     # qseecomd bridge for stock KeyMint & Gatekeeper
     symlink /dev/qseecom_bridge /dev/qseecom
     # UFS RPMB well-known LU and query node for RPMB listener
