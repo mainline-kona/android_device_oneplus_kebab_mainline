@@ -30,6 +30,82 @@ on fs
 on late-fs
     mount_all --late
 
+on boot
+    # Allow AIDL Health HAL (LONG_LIFE 80% cap) and LineageOS Charging Control
+    # (both running as system:system) to toggle MP2650 bypass charging.
+    chown system system /sys/class/power_supply/mp2650-charger/charge_behaviour
+    chmod 0664 /sys/class/power_supply/mp2650-charger/charge_behaviour
+    chown system system /sys/class/power_supply/mp2650-charger/charging_enabled
+    chmod 0664 /sys/class/power_supply/mp2650-charger/charging_enabled
+
+    # Allow AIDL Type-C USB HAL (running as system:system) to switch roles
+    chown system system /sys/class/typec/port0/data_role
+    chmod 0664 /sys/class/typec/port0/data_role
+    chown system system /sys/class/typec/port0/power_role
+    chmod 0664 /sys/class/typec/port0/power_role
+    chown system system /sys/class/typec/port0/port_type
+    chmod 0664 /sys/class/typec/port0/port_type
+    chown system system /sys/class/typec/port0/preferred_role
+    chmod 0664 /sys/class/typec/port0/preferred_role
+
+    # UVC USB Webcam gadget function (DeviceAsWebcam + UsbGadget HAL uvc.0)
+    mkdir /config/usb_gadget/g1/functions/uvc.0
+    write /config/usb_gadget/g1/functions/uvc.0/function_name "OnePlus 8T Webcam"
+    write /config/usb_gadget/g1/functions/uvc.0/streaming_maxpacket 3072
+    write /config/usb_gadget/g1/functions/uvc.0/streaming_maxburst 13
+    mkdir /config/usb_gadget/g1/functions/uvc.0/control/header/h
+    symlink /config/usb_gadget/g1/functions/uvc.0/control/header/h /config/usb_gadget/g1/functions/uvc.0/control/class/fs/h
+    symlink /config/usb_gadget/g1/functions/uvc.0/control/header/h /config/usb_gadget/g1/functions/uvc.0/control/class/ss/h
+    mkdir /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m
+    mkdir /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/480p
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/480p/wWidth 640
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/480p/wHeight 480
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/480p/dwDefaultFrameInterval 333333
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/480p/dwFrameInterval 333333
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/480p/dwMinBitRate 18432000
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/480p/dwMaxBitRate 55296000
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/480p/dwMaxVideoFrameBufferSize 614400
+    mkdir /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/720p
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/720p/wWidth 1280
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/720p/wHeight 720
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/720p/dwDefaultFrameInterval 333333
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/720p/dwFrameInterval 333333
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/720p/dwMinBitRate 55296000
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/720p/dwMaxBitRate 165888000
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/720p/dwMaxVideoFrameBufferSize 1843200
+    mkdir /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/1080p
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/1080p/wWidth 1920
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/1080p/wHeight 1080
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/1080p/dwDefaultFrameInterval 333333
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/1080p/dwFrameInterval 333333
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/1080p/dwMinBitRate 124416000
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/1080p/dwMaxBitRate 373248000
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m/1080p/dwMaxVideoFrameBufferSize 4147200
+    mkdir /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u
+    mkdir /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/480p
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/480p/wWidth 640
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/480p/wHeight 480
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/480p/dwDefaultFrameInterval 333333
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/480p/dwFrameInterval 333333
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/480p/dwMinBitRate 147456000
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/480p/dwMaxBitRate 147456000
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/480p/dwMaxVideoFrameBufferSize 614400
+    mkdir /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/720p
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/720p/wWidth 1280
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/720p/wHeight 720
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/720p/dwDefaultFrameInterval 333333
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/720p/dwFrameInterval 333333
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/720p/dwMinBitRate 442368000
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/720p/dwMaxBitRate 442368000
+    write /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u/720p/dwMaxVideoFrameBufferSize 1843200
+    mkdir /config/usb_gadget/g1/functions/uvc.0/streaming/header/h
+    symlink /config/usb_gadget/g1/functions/uvc.0/streaming/mjpeg/m /config/usb_gadget/g1/functions/uvc.0/streaming/header/h/m
+    symlink /config/usb_gadget/g1/functions/uvc.0/streaming/uncompressed/u /config/usb_gadget/g1/functions/uvc.0/streaming/header/h/u
+    symlink /config/usb_gadget/g1/functions/uvc.0/streaming/header/h /config/usb_gadget/g1/functions/uvc.0/streaming/class/fs/h
+    symlink /config/usb_gadget/g1/functions/uvc.0/streaming/header/h /config/usb_gadget/g1/functions/uvc.0/streaming/class/hs/h
+    symlink /config/usb_gadget/g1/functions/uvc.0/streaming/header/h /config/usb_gadget/g1/functions/uvc.0/streaming/class/ss/h
+    chown system system /config/usb_gadget/g1/functions/uvc.0
+
 on post-fs-data
     # GP secure storage directory for qseecomd's libdrmfs listener
     mkdir /data/vendor/tzstorage 0770 system system

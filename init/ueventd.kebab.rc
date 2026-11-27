@@ -15,6 +15,10 @@ firmware_directories /lib/firmware/ /system/etc/firmware/ /vendor/firmware/ /odm
 /dev/ion                  0664   system     system
 /dev/kgsl-3d0             0666   system     graphics
 
+# V4L2 video nodes: Venus codecs (/dev/video0..1, media), camera HAL (camera),
+# and UVC USB webcam gadget (/dev/video2+, system/DeviceAsWebcam; SELinux-gated by video_device)
+/dev/video*               0666   media      camera
+
 # Storage
 /dev/block/by-name/*      0660   root       system
 

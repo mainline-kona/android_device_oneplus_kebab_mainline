@@ -1,0 +1,6 @@
+#
+# Copyright (C) 2026 The PenguinOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+r_dir_file(hal_usb_default, sysfs_batteryinfo)

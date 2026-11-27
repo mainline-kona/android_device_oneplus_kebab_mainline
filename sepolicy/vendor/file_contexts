@@ -12,7 +12,6 @@
 /vendor/bin/hw/android\.hardware\.light-service\.lineage	u:object_r:hal_light_default_exec:s0
 /vendor/bin/hw/android\.hardware\.nfc2-service\.nxp		u:object_r:hal_nfc_default_exec:s0
 /vendor/bin/hw/android\.hardware\.thermal-service\.kona		u:object_r:hal_thermal_default_exec:s0
-/vendor/bin/hw/android\.hardware\.usb-service\.basic		u:object_r:hal_usb_default_exec:s0
 
 # Vendor binaries
 /vendor/bin/bringup-log\.sh					u:object_r:vendor_shell_exec:s0

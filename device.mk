@@ -34,6 +34,9 @@ TARGET_LIGHT_HAL_SCAN_FOR_BACKLIGHT_DEVICES := true
 # Deep sleep (s2idle): fastrpc freezer fix, MHI poll suspend, DWC3 host-connected wakelock
 TARGET_SUPPORTS_SUSPEND := true
 
+# USB Port HAL: disable dummy lineage-basic stub; use AOSP AIDL v4 Type-C HAL below
+TARGET_USB_HAL := none
+
 # Hardware video codecs: venus (/dev/video0 enc, /dev/video1 dec)
 # through the V4L2 Codec2 HAL, with kebab's own codec list
 TARGET_MEDIA_C2_HAL := v4l2_codec2
@@ -98,9 +101,23 @@ PRODUCT_PACKAGES += \
     android.hardware.thermal-service.kona
 
 # Health: AIDL v5 HAL (2S bq28z610 normalization, SOH, MP2650 policy, UFS health)
+# + LineageOS Charging Control (true bypass charging via MP2650 CHG_EN=0)
 PRODUCT_PACKAGES += \
     android.hardware.health-service.kona \
-    android.hardware.health-service.kona_recovery
+    android.hardware.health-service.kona_recovery \
+    vendor.lineage.health-service.default
+
+# USB: AOSP AIDL v4 Type-C Port HAL (DRP, role switching, USB-PD profiles)
+# + CDC NCM USB Tethering RRO (ACK 6.18 GKI dropped deprecated RNDIS)
+PRODUCT_PACKAGES += \
+    android.hardware.usb-service.example \
+    NcmTetheringOverlay
+
+$(call soong_config_set,lineage_health,charging_control_charging_path,/sys/class/power_supply/mp2650-charger/charging_enabled)
+$(call soong_config_set,lineage_health,charging_control_charging_enabled,1)
+$(call soong_config_set,lineage_health,charging_control_charging_disabled,0)
+$(call soong_config_set_bool,lineage_health,charging_control_supports_toggle,true)
+$(call soong_config_set_bool,lineage_health,charging_control_supports_bypass,true)
 
 # Radio: AIDL v5 RIL (libcuttlefish-rild) + QMI multi-APN data (kona-dataconn)
 # + Open AOSP VoLTE / IMS stack (generic-ims: ImsStack, ImsMedia, Iwlan, QNS, CarrierSettings)
@@ -339,6 +356,7 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_SYSTEM_PROPERTIES += \
     ro.adb.secure=0 \
+    ro.usb.uvc.enabled=true \
     log.tag.drmhwc=I
 
 PRODUCT_PRODUCT_PROPERTIES += \

@@ -14,6 +14,11 @@ genfscon sysfs /devices/platform/soc@0/8c0000.geniqup/888000.i2c/i2c-16/16-0055/
 genfscon sysfs /devices/platform/soc@0/9c0000.geniqup/994000.i2c/i2c-5/5-005c/power_supply			u:object_r:sysfs_batteryinfo:s0
 genfscon sysfs /devices/platform/soc@0/c440000.spmi/spmi-0/0-02/c440000.spmi:pmic@2:typec@1500/power_supply	u:object_r:sysfs_batteryinfo:s0
 
+# USB UDC, Type-C & USB Power Delivery sysfs (USB HAL & USB Gadget HAL)
+genfscon sysfs /devices/platform/soc@0/a6f8800.usb/a600000.usb/udc							u:object_r:sysfs_udc:s0
+genfscon sysfs /devices/platform/soc@0/c440000.spmi/spmi-0/0-02/c440000.spmi:pmic@2:typec@1500/typec			u:object_r:sysfs_typec:s0
+genfscon sysfs /devices/platform/soc@0/c440000.spmi/spmi-0/0-02/c440000.spmi:pmic@2:typec@1500/usb_power_delivery	u:object_r:sysfs_usb_pd:s0
+
 # UFS 3.1 storage health & string descriptors (Health HAL)
 genfscon sysfs /devices/platform/soc@0/1d84000.ufshc/health_descriptor						u:object_r:vendor_sysfs_ufs:s0
 genfscon sysfs /devices/platform/soc@0/1d84000.ufshc/string_descriptors						u:object_r:vendor_sysfs_ufs:s0
