@@ -91,11 +91,10 @@ on property:init.svc.vendor.rmtfs=restarting
 # "-i 3": stock tftp_server publishes one instance per remote and the X55's
 # MPSS only looks up instance 3 (/vendor/rfs/mdm/mpss); instance 1 alone is
 # never found, so the modem never fetched its MCFG / RF card files.
-service vendor.tqftpserv_early /vendor/bin/tqftpserv -d -i 3
+service vendor.tqftpserv_early /vendor/bin/tqftpserv -i 3
     class core
     user root
     group system
-    stdio_to_kmsg
     disabled
 
 service vendor.kebab_pdready /vendor/bin/kebab-pdready.sh
