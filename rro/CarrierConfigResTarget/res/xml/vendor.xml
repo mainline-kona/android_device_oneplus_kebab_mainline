@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<!--
+     Copyright (C) 2026 The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+
+     Device-wide IWLAN keepalive tuning for ath11k (no firmware NAT-T offload):
+     relax NAT-T keepalive (20s -> 60s) and IKEv2 DPD (120s -> 300s) to cut
+     VoWiFi deep-doze AP wakeups by ~3x while staying inside NAT UDP timeouts.
+-->
+<carrier_config_list>
+    <carrier_config>
+        <int name="iwlan.natt_keep_alive_timer_sec_int" value="60" />
+        <int name="iwlan.dpd_timer_sec_int" value="300" />
+    </carrier_config>
+</carrier_config_list>

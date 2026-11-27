@@ -379,6 +379,7 @@ TARGET_ENABLE_SELOGGER := true
 
 # Overlays
 PRODUCT_PACKAGES += \
+    KebabMainlineCarrierConfigResTarget \
     KebabMainlineFrameworksResTarget \
     KebabMainlineKeyHandlerResTarget \
     KebabMainlineLineageSDKResTarget \
