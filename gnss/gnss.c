@@ -22,6 +22,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __ANDROID__
+#include <sys/system_properties.h>
+#endif
 #include <time.h>
 #include <unistd.h>
 
@@ -443,10 +446,21 @@ static QrtrNode *find_loc_node(QrtrBus *bus) {
     return NULL;
 }
 
+static gboolean is_airplane_mode_on(void) {
+#ifdef __ANDROID__
+    char val[PROP_VALUE_MAX] = {0};
+    if (__system_property_get("persist.radio.airplane_mode_on", val) > 0 && val[0] == '1')
+        return TRUE;
+#endif
+    return FALSE;
+}
+
 /*
  * Bring the external SDX55 modem to ONLINE mode via QMI DMS when no RIL has
  * done so yet. Without ONLINE mode (e.g. modem sitting in shutting-down / LPM),
  * QMI LOC accepts START but keeps ENGINE_STATE=OFF with zero SV/NMEA output.
+ * Never call this when Airplane Mode is enabled or for background aiding
+ * injections (time/pos/XTRA), or it would silently turn cellular RF back on.
  */
 static void ensure_modem_online(QmiDevice *dev, Wait *w) {
     GError *error = NULL;
@@ -947,7 +961,8 @@ int main(int argc, char **argv) {
     qmi_device_open(dev, QMI_DEVICE_OPEN_FLAGS_NONE, 15, NULL, on_done, &w);
     if (!qmi_device_open_finish(dev, wait_result(&w), &error)) fail("open device", error);
 
-    ensure_modem_online(dev, &w);
+    if (mode == MODE_TRACK && !is_airplane_mode_on())
+        ensure_modem_online(dev, &w);
 
     qmi_device_allocate_client(dev, QMI_SERVICE_LOC, QMI_CID_NONE, 10, NULL, on_done, &w);
     g_autoptr(QmiClient) loc = qmi_device_allocate_client_finish(dev, wait_result(&w), &error);
