@@ -40,6 +40,9 @@ TARGET_SUPPORTS_SUSPEND := true
 # USB Port HAL: disable dummy lineage-basic stub; use AOSP AIDL v4 Type-C HAL below
 TARGET_USB_HAL := none
 
+# Camera Provider HAL: disable mainline/libcamera provider; use stock CamX/CHI HIDL 2.4
+TARGET_CAMERA_PROVIDER_HAL := none
+
 # Hardware video codecs: venus (/dev/video0 enc, /dev/video1 dec)
 # through the V4L2 Codec2 HAL, with kebab's own codec list
 TARGET_MEDIA_C2_HAL := v4l2_codec2
@@ -55,6 +58,9 @@ PRODUCT_HIDL_ENABLED := true
 $(call inherit-product, device/mainline/qcom-common/mainline_qcom-common.mk)
 
 # Media (V4L2 Codec2, see TARGET_MEDIA_C2_HAL above)
+PRODUCT_PACKAGES += \
+    media_profiles_kebab.xml
+
 PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/media/media_codecs_c2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_c2.xml
 
@@ -408,6 +414,7 @@ TARGET_ENABLE_SELOGGER := true
 
 # Overlays
 PRODUCT_PACKAGES += \
+    KebabMainlineApertureResTarget \
     KebabMainlineCarrierConfigResTarget \
     KebabMainlineFrameworksResTarget \
     KebabMainlineKeyHandlerResTarget \

@@ -1,0 +1,12 @@
+//
+// Copyright (C) 2026 The PenguinOS Project
+// SPDX-License-Identifier: Apache-2.0
+//
+
+prebuilt_etc {
+    name: "media_profiles_kebab.xml",
+    src: "media_profiles_V1_0.xml",
+    filename: "media_profiles_V1_0.xml",
+    overrides: ["media_profiles.xml"],
+    vendor: true,
+}

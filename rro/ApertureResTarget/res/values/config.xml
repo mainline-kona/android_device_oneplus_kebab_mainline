@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 The PenguinOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!-- Enable auxiliary cameras selector (IMX481 ultrawide, GC5035 macro, GC02M1B mono). -->
+    <bool name="config_enableAuxCameras">true</bool>
+
+    <!-- Ignore duplicate logical multi-camera devices (IDs 5, 6, 7). -->
+    <bool name="config_ignoreLogicalAuxCameras">true</bool>
+
+    <!-- GC5035 5MP macro (camera ID 3) omits BACKWARD_COMPATIBLE in static metadata
+         but streams standard YUV/JPEG output normally. -->
+    <string-array name="config_backwardCompatibleCameraIds">
+        <item>3</item>
+    </string-array>
+
+    <bool name="config_enableHighResolution">true</bool>
+</resources>

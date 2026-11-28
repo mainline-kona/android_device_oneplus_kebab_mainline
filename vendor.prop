@@ -17,9 +17,11 @@ debug.renderengine.backend=skiavkthreaded
 # Enable ADPF CPU hint sessions for SurfaceFlinger and HWUI RenderThreads
 debug.sf.enable_adpf_cpu_hint=true
 debug.hwui.use_hint_manager=true
-# QTI Gralloc (sm8850 DMA-heap + mapper.qti): keep UBWC off for Turnip + drm_hwcomposer
-vendor.gralloc.disable_ubwc=1
-vendor.gralloc.enable_fb_ubwc=0
+# QTI Gralloc (sm8850 DMA-heap + mapper.qti): use DMA-BUF heaps (system-uncached)
+# and RGB UBWC (DRM_FORMAT_MOD_QCOM_COMPRESSED) for Turnip + drm_hwcomposer.
+vendor.gralloc.use_dma_buf_heaps=1
+vendor.gralloc.disable_ubwc=0
+vendor.gralloc.enable_fb_ubwc=1
 
 # Light
 vendor.light.backlight.disable=false
@@ -77,3 +79,6 @@ apexd.config.dm_create.timeout=10000
 # helper because the modem inspects the AP voice graph before the call is set
 # up; a HAL-started second instance fights the RIL one for the PCM (EBUSY).
 vendor.audio.mainline.voice_call_service=
+
+# Camera: expose auxiliary lenses (ultrawide, macro, mono) to Aperture
+vendor.camera.aux.packagelist=org.lineageos.aperture
