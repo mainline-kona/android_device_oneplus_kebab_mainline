@@ -422,8 +422,6 @@ PRODUCT_PACKAGES += \
     KebabMainlineCarrierConfigResTarget \
     KebabMainlineFrameworksResTarget \
     KebabMainlineKeyHandlerResTarget \
-    KebabMainlineLineageSDKResTarget \
-    KebabMainlineLineageSettingsProviderResTarget \
     KebabMainlineNfcResTarget \
     KebabMainlineOPlusFrameworksResTarget \
     KebabMainlineOPlusSettingsProviderResTarget \

@@ -4,15 +4,15 @@
 #
 
 # Inherit from those products. Most specific first.
-$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
 TARGET_SUPPORTS_OMX_SERVICE := false
 $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
 
 # Inherit from kebab mainline device
 $(call inherit-product, device/oneplus/kebab_mainline/device.mk)
 
-# Inherit common PixelOS / custom rom configuration
-$(call inherit-product, vendor/lineage/config/common_full_phone.mk)
+# Inherit from the Neoteric configuration
+$(call inherit-product, vendor/neoteric/target/product/neoteric-target.mk)
 
 PRODUCT_NAME := kebab_mainline
 PRODUCT_DEVICE := kebab_mainline

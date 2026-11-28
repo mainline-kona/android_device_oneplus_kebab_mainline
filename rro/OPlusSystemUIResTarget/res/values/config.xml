@@ -4,12 +4,6 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
-    <!-- Preferred max refresh rate at AOD & Ambient Display, if supported by the display. -->
-    <integer name="config_aodMaxRefreshRate">60</integer>
-
-    <!-- Xiaomi Madrid style-E halo/ripple UDFPS effect, using the real 24-frame animation. -->
-    <bool name="config_udfpsMadridHaloRipple">true</bool>
-
     <!-- OnePlus 8T factory-calibrated warm-white optical illumination color for Goodix gfp9638 -->
     <color name="config_udfpsColor">#ffffe6</color>
 
