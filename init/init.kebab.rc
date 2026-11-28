@@ -25,6 +25,9 @@ on init
     symlink /dev/dma_heap/system /dev/dma_heap/qcom,qseecom
     symlink /dev/dma_heap/system /dev/dma_heap/qseecom
     symlink /dev/dma_heap/system /dev/dma_heap/qseecom_ta
+    # QTI Gralloc DMA-BUF heaps -> mainline system heap
+    symlink /dev/dma_heap/system /dev/dma_heap/qcom,system
+    symlink /dev/dma_heap/system /dev/dma_heap/qcom,display
 
 on fs
     mount_all --early
@@ -111,6 +114,8 @@ on boot
 on post-fs-data
     # GP secure storage directory for qseecomd's libdrmfs listener
     mkdir /data/vendor/tzstorage 0770 system system
+    # Camera persistent cache / tuning / EEPROM directory
+    mkdir /data/vendor/camera 0770 cameraserver camera
     # The X55 probes TFTP at ~11 s, before qcom-common's "boot" action runs.
     # Create /data/vendor/tmp/tqftpserv here (after installkey /data has set up
     # FBE in post-fs-data) so tqftpserv can serve /readwrite/ on first boot.
@@ -152,6 +157,10 @@ on post-fs
     # Voice audio calibration level 0 (topology bypass to prevent ADSP -5 failures)
     write /sys/module/q6voice/parameters/cal_level 0
     start vendor.kebab_pdready
+    # Load Titan 480 camera kernel module (includes synx) once /vendor/firmware
+    # is mounted, then start the HIDL 2.4 camera provider with libcamhidl_shim.
+    insmod /vendor/lib/modules/camera.ko
+    start vendor.camera-provider-2-4
     # The external SDX55 is flashless: mhi-pci-generic stays bound and powers
     # it up by itself once sdx55m/sbl1.mbn is readable through the path above
     # (do NOT unbind/rebind it here: that aborts the SBL transfer mid-flight).
@@ -237,3 +246,17 @@ service watchdogd /system/bin/watchdogd 10 20
     user root
     group root
     seclabel u:r:watchdogd:s0
+
+# Override camera provider@2.4-service_64 so it starts only after camera.ko is
+# loaded and preloads libcamhidl_shim.so (in-process IQtiMapper@3.0 + IPostProcService).
+service vendor.camera-provider-2-4 /vendor/bin/hw/android.hardware.camera.provider@2.4-service_64
+    override
+    interface android.hardware.camera.provider@2.4::ICameraProvider legacy/0
+    class hal
+    user cameraserver
+    group audio camera input drmrpc graphics
+    ioprio rt 4
+    capabilities SYS_NICE
+    setenv LD_PRELOAD /vendor/lib64/libcamhidl_shim.so
+    task_profiles CameraServiceCapacity MaxPerformance
+    disabled

@@ -17,6 +17,9 @@ debug.renderengine.backend=skiavkthreaded
 # Enable ADPF CPU hint sessions for SurfaceFlinger and HWUI RenderThreads
 debug.sf.enable_adpf_cpu_hint=true
 debug.hwui.use_hint_manager=true
+# QTI Gralloc (sm8850 DMA-heap + mapper.qti): keep UBWC off for Turnip + drm_hwcomposer
+vendor.gralloc.disable_ubwc=1
+vendor.gralloc.enable_fb_ubwc=0
 
 # Light
 vendor.light.backlight.disable=false

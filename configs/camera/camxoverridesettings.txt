@@ -1,0 +1,19 @@
+#
+# Copyright (C) 2026 The PenguinOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+# CamX override settings for OnePlus 8T (kebab, SM8250) on mainline ACK 6.18.
+#
+
+# Disable downstream CVP/FD HW engines and NCS sensor service until validated
+disableCVPDriver=TRUE
+disableFDHWProcessing=TRUE
+enableNCSService=FALSE
+
+# Disable heavy debug/tuning dumps
+enable3ADebugData=FALSE
+enableTuningMetadata=FALSE
+
+# Keep UBWC disabled in camera paths to match vendor.gralloc.disable_ubwc=1
+# (Turnip + drm_hwcomposer linear scanout)
+enableUBWC=FALSE

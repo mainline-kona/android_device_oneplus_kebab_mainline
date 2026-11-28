@@ -57,6 +57,8 @@ TARGET_KERNEL_SOURCE := kernel/oneplus/sm8250
 TARGET_KERNEL_CONFIG := gki_defconfig kebab-android.config
 BOARD_KERNEL_IMAGE_NAME := Image
 TARGET_KERNEL_DTB := qcom/sm8250-oneplus-kebab.dtb
+TARGET_KERNEL_EXT_MODULE_ROOT := vendor/qcom/opensource
+TARGET_KERNEL_EXT_MODULES := camera-kernel
 
 # DTB / DTBO
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
@@ -120,6 +122,22 @@ include hardware/oplus/sepolicy/mainline/SEPolicy.mk
 BOARD_WLAN_DEVICE := desktop
 WIFI_HAL_INTERFACE_COMBINATIONS := {{{STA}, 1}, {{AP}, 1}, {{P2P}, 1}},{{{STA}, 1}, {{AP_BRIDGED}, 1}}
 
+# QTI Gralloc (hardware/qcom-caf/sm8850/display/hal/gralloc + libqdmetadata)
+# Match stock SM8250 private_handle_t layout (reserved_size) and sm8850 fields
+SOONG_CONFIG_NAMESPACES += qtidisplay
+SOONG_CONFIG_qtidisplay += \
+    default \
+    gralloc4 \
+    gralloc_handle_has_reserved_size \
+    gralloc_handle_has_custom_content_md_reserved_size \
+    gralloc_handle_has_ubwcp_format
+SOONG_CONFIG_qtidisplay_default := true
+SOONG_CONFIG_qtidisplay_gralloc4 := true
+SOONG_CONFIG_qtidisplay_gralloc_handle_has_reserved_size := true
+SOONG_CONFIG_qtidisplay_gralloc_handle_has_custom_content_md_reserved_size := true
+SOONG_CONFIG_qtidisplay_gralloc_handle_has_ubwcp_format := true
+
 # VINTF
 DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/configs/manifest_security.xml
+DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/configs/manifest_camera.xml
 DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE += $(DEVICE_PATH)/configs/framework_compatibility_matrix.xml

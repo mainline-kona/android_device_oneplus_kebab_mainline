@@ -12,6 +12,23 @@
 /vendor/bin/hw/android\.hardware\.light-service\.lineage	u:object_r:hal_light_default_exec:s0
 /vendor/bin/hw/android\.hardware\.nfc2-service\.nxp		u:object_r:hal_nfc_default_exec:s0
 /vendor/bin/hw/android\.hardware\.thermal-service\.kona		u:object_r:hal_thermal_default_exec:s0
+/vendor/bin/hw/vendor\.qti\.hardware\.display\.allocator-service	u:object_r:hal_graphics_allocator_default_exec:s0
+
+# QTI Gralloc IMapper 5 SP-HAL and transitive vendor libraries (loaded by all graphic clients)
+/vendor/lib(64)?/hw/mapper\.qti\.so				u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/android\.hardware\.common-V2-ndk\.so		u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/android\.hardware\.graphics\.allocator-V2-ndk\.so	u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/android\.hardware\.graphics\.common-V[0-9]+-ndk\.so	u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/android\.hardware\.graphics\.common@1\.[0-2]\.so	u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/android\.hardware\.graphics\.mapper@[2-4]\.[0-1]\.so	u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libdmabufheap\.so				u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libgralloc\.qti\.so				u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libgralloccore\.so				u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libgralloctypes\.so				u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libgrallocutils\.so				u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libmapperutils\.so				u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libqdMetaData\.so				u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libvmmem\.so					u:object_r:same_process_hal_file:s0
 
 # Vendor binaries
 /vendor/bin/bringup-log\.sh					u:object_r:vendor_shell_exec:s0
@@ -29,6 +46,11 @@
 
 # Goodix optical UDFPS sensor
 /dev/goodix_fp		u:object_r:vendor_goodix_fp_device:s0
+
+# Camera (synx fence device, persistent cache, provider@2.4 binary)
+/dev/synx_device		u:object_r:vendor_synx_device:s0
+/data/vendor/camera(/.*)?	u:object_r:vendor_camera_data_file:s0
+/vendor/bin/hw/android\.hardware\.camera\.provider@2\.4-service_64	u:object_r:hal_camera_default_exec:s0
 
 # Telephony (external SDX55 over MHI)
 /vendor/bin/hw/libcuttlefish-rild	u:object_r:rild_exec:s0

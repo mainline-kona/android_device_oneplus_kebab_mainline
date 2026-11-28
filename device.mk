@@ -23,6 +23,9 @@ $(call soong_config_set,power_libperfmgr,mode_extension_lib,//hardware/oplus:pow
 TARGET_BOARD_PLATFORM := qcom
 TARGET_QCOM_SOC := sm8250
 TARGET_GRAPHICS := mesa
+# Use Qualcomm sm8850 DMA-BUF heap gralloc + IMapper 5 (mapper.qti) so stock
+# CamX (camera.qcom.so / libqdMetaData.so) and Mesa Turnip share QTI handles.
+TARGET_GRAPHICS_ALLOCATOR_HAL := qti
 TARGET_BOOT_HAL := qcom-caf-aidl
 # Enable mainline-common A/B OTA definitions (update_engine, update_engine_sideload,
 # update_verifier, otapreopt_script, AB_OTA_POSTINSTALL_CONFIG) before inheriting
@@ -71,7 +74,12 @@ PRODUCT_PACKAGES += \
     snapuserd.recovery \
     linux_firmware_qcom-a650
 
-# Graphics (Mesa Turnip Vulkan 1.3 on Adreno 650)
+# Graphics (Mesa Turnip Vulkan 1.3 on Adreno 650 + QTI sm8850 Gralloc / IMapper 5)
+PRODUCT_PACKAGES += \
+    mapper.qti \
+    vendor.qti.hardware.display.allocator-service \
+    libqdMetaData
+
 # Install 00-turnip-defaults.conf as /vendor/etc/drirc (vendor_configs_file,
 # readable by all domains under Enforcing SELinux) so tu_emulate_second_queue
 # activates for Android HWUI ("android framework").
@@ -122,6 +130,9 @@ $(call soong_config_set_bool,lineage_health,charging_control_supports_bypass,tru
 # Radio: AIDL v5 RIL (libcuttlefish-rild) + QMI multi-APN data (kona-dataconn)
 # + Open AOSP VoLTE / IMS stack (generic-ims: ImsStack, ImsMedia, Iwlan, QNS, CarrierSettings)
 $(call inherit-product, hardware/lineage/generic-ims/ims.mk)
+
+# Camera: stock OnePlus 8T CamX / CHI over kona-camera-kernel + QTI sm8850 Gralloc
+$(call inherit-product, $(DEVICE_PATH)/camera.mk)
 
 PRODUCT_PACKAGES += \
     kona-dataconn \
@@ -420,4 +431,6 @@ PRODUCT_SOONG_NAMESPACES += \
     $(DEVICE_PATH) \
     hardware/oplus \
     hardware/mainline/common \
-    external/mainline-hw-deps
+    external/mainline-hw-deps \
+    hardware/qcom-caf/sm8850 \
+    vendor/qcom/opensource/commonsys-intf/display

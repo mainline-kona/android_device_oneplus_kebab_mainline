@@ -1,2 +1,3 @@
 set_prop(vendor_init, vendor_fingerprint_prop)
 set_prop(vendor_init, vendor_gatekeeper_prop)
+allow vendor_init vendor_camera_data_file:dir create_dir_perms;

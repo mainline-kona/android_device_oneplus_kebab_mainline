@@ -1,0 +1,6 @@
+#
+# Copyright (C) 2026 The PenguinOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+mapper/qti	u:object_r:hal_graphics_mapper_service:s0
