@@ -11,8 +11,17 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
 # Inherit from kebab mainline device
 $(call inherit-product, device/oneplus/kebab_mainline/device.mk)
 
+# Prevent device/qcom/common/common.mk from adding nonexistent hardware/qcom-caf/qcom
+QCOM_SOONG_NAMESPACE := hardware/qcom-caf/sm8850
+
 # Inherit from the Neoteric configuration
 $(call inherit-product, vendor/neoteric/target/product/neoteric-target.mk)
+
+# Clear downstream QTI display flags set by device/qcom/common/common.mk
+# that do not exist on mainline (no smmu_proxy_uapi_header or UBWCP).
+SOONG_CONFIG_qtidisplay_drmpp := false
+SOONG_CONFIG_qtidisplay_smmu_proxy := false
+SOONG_CONFIG_qtidisplay_ubwcp_headers := false
 
 PRODUCT_NAME := kebab_mainline
 PRODUCT_DEVICE := kebab_mainline
