@@ -70,6 +70,7 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.v4l2_codec2.decoder.supported.vp8=true \
     ro.vendor.v4l2_codec2.decoder.supported.vp9=true \
     ro.vendor.v4l2_codec2.encoder.supported.h264=true \
+    ro.vendor.v4l2_codec2.encoder.supported.hevc=true \
     ro.vendor.v4l2_codec2.decode_concurrent_instances=8 \
     ro.vendor.v4l2_codec2.encode_concurrent_instances=8 \
     debug.stagefright.c2-poolmask=0x1f50000
@@ -126,6 +127,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.usb-service.example \
     NcmTetheringOverlay
+
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.usb.accessory.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.accessory.xml
 
 $(call soong_config_set,lineage_health,charging_control_charging_path,/sys/class/power_supply/mp2650-charger/charging_enabled)
 $(call soong_config_set,lineage_health,charging_control_charging_enabled,1)
@@ -420,6 +424,7 @@ PRODUCT_PACKAGES += \
     KebabMainlineKeyHandlerResTarget \
     KebabMainlineLineageSDKResTarget \
     KebabMainlineLineageSettingsProviderResTarget \
+    KebabMainlineNfcResTarget \
     KebabMainlineOPlusFrameworksResTarget \
     KebabMainlineOPlusSettingsProviderResTarget \
     KebabMainlineOPlusSettingsResTarget \

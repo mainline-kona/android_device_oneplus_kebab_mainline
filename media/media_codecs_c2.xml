@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
   kebab (SM8250 venus, V4L2 stateful API via external/v4l2_codec2).
-  Venus here decodes H.264/HEVC/VP8/VP9 and encodes H.264; no secure decode
+  Venus here decodes H.264/HEVC/VP8/VP9 and encodes H.264/HEVC; no secure decode
   (no content protection on mainline), so no .secure entries.
 -->
 <MediaCodecs>
@@ -67,6 +67,18 @@
            <Limit name="bitrate" range="1-100000000" />
            <Limit name="concurrent-instances" max="8" />
            <Limit name="performance-point-1920x1080" value="120" />
+           <Feature name="can-swap-width-height" value="1" />
+       </MediaCodec>
+
+       <MediaCodec name="c2.v4l2.hevc.encoder" type="video/hevc">
+           <Limit name="size" min="96x96" max="4096x2304" />
+           <Limit name="alignment" value="2x2" />
+           <Limit name="block-size" value="16x16" />
+           <Limit name="blocks-per-second" range="1-979200" />
+           <Limit name="bitrate" range="1-100000000" />
+           <Limit name="concurrent-instances" max="8" />
+           <Limit name="performance-point-1920x1080" value="120" />
+           <Limit name="performance-point-3840x2160" value="60" />
            <Feature name="can-swap-width-height" value="1" />
        </MediaCodec>
    </Encoders>
