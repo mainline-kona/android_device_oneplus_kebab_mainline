@@ -23,6 +23,12 @@ SOONG_CONFIG_qtidisplay_drmpp := false
 SOONG_CONFIG_qtidisplay_smmu_proxy := false
 SOONG_CONFIG_qtidisplay_ubwcp_headers := false
 
+# Exclude unused CLO downstream NXP HAL repos that depend on proprietary
+# QTI peripheralstate_headers / mink_headers (we use AOSP hardware/nxp/nfc).
+PRODUCT_SOURCE_ROOT_DIRS += \
+    -vendor/nxp/opensource/halimpl \
+    -vendor/nxp/opensource/libnfc_halimpl_extn
+
 PRODUCT_NAME := kebab_mainline
 PRODUCT_DEVICE := kebab_mainline
 PRODUCT_MANUFACTURER := OnePlus
