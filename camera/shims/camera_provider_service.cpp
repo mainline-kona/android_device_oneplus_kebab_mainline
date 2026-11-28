@@ -16,12 +16,28 @@
 #include <hidl/LegacySupport.h>
 #include <log/log.h>
 #include <malloc.h>
+#include <string.h>
 
 using android::status_t;
 using android::hardware::defaultPassthroughServiceImplementation;
 using android::hardware::camera::provider::V2_4::ICameraProvider;
 
-int main() {
+int main(int argc, char** argv) {
+    /*
+     * SenseTime libcvface_api.so validates /proc/self/cmdline against the stock
+     * binary path (/vendor/bin/hw/android.hardware.camera.provider@2.4-service_64).
+     * Strip our ".kebab" suffix in-place so /proc/self/cmdline matches stock while
+     * avoiding Soong install/symbol collisions with AOSP's provider binary.
+     */
+    if (argc > 0 && argv[0] != nullptr) {
+        static constexpr char kSuffix[] = ".kebab";
+        size_t len = strlen(argv[0]);
+        size_t slen = sizeof(kSuffix) - 1;
+        if (len > slen && strcmp(argv[0] + len - slen, kSuffix) == 0) {
+            memset(argv[0] + len - slen, 0, slen);
+        }
+    }
+
     ALOGI("CameraProvider@2.4 legacy service (kebab in-process shim) is starting.");
     android::ProcessState::initWithDriver("/dev/vndbinder");
 
