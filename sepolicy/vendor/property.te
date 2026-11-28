@@ -1,2 +1,5 @@
 vendor_internal_prop(vendor_fingerprint_prop)
 vendor_internal_prop(vendor_gatekeeper_prop)
+vendor_internal_prop(vendor_tee_prop)
+vendor_internal_prop(vendor_wlan_prop)
+vendor_internal_prop(vendor_kebab_pdready_prop)

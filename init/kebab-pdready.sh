@@ -21,4 +21,4 @@ chown -R system:system /mnt/vendor/persist/sensors 2>/dev/null || true
 # is up before class_start hal starts vendor.sensors-mainline (otherwise libssc
 # hits 6x10s QMI timeouts delaying system_server by ~62s).
 /vendor/bin/sh /vendor/bin/init.mainline.qcom.start_remoteproc.sh
-setprop sys.kebab.pdready 1
+setprop vendor.kebab.pdready 1

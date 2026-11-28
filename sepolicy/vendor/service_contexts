@@ -3,4 +3,5 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-mapper/qti	u:object_r:hal_graphics_mapper_service:s0
+mapper/qti					u:object_r:hal_graphics_mapper_service:s0
+vendor.nxp.nxpnfc_aidl.INxpNfc/default		u:object_r:hal_vendor_nxp_nxpnfc_service:s0

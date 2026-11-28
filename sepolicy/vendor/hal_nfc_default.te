@@ -1,0 +1,8 @@
+#
+# Copyright (C) 2026 The PenguinOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+add_service(hal_nfc_default, hal_vendor_nxp_nxpnfc_service)
+allow hal_nfc_default vendor_nfc_data_file:dir create_dir_perms;
+allow hal_nfc_default vendor_nfc_data_file:file create_file_perms;

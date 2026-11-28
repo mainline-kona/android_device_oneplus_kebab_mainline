@@ -1,1 +1,12 @@
 allow kernel firmware_mnt_file:system firmware_load;
+
+# Bring-up klog_flush kworker attempts to snapshot last_kmsg to persist/metadata;
+# silence harmless audit spam under Enforcing (ramoops/pstore remains active).
+dontaudit kernel mnt_vendor_file:dir { add_name search write };
+dontaudit kernel vendor_persist_klog_file:dir { add_name search write };
+dontaudit kernel vendor_persist_klog_file:file { create open write };
+dontaudit kernel metadata_file:dir { add_name search write };
+dontaudit kernel metadata_file:file { create open write };
+dontaudit kernel block_device:dir search;
+dontaudit kernel proc:file { open read };
+dontaudit kernel self:capability dac_read_search;

@@ -1,0 +1,10 @@
+#
+# Copyright (C) 2026 The PenguinOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+allow vendor_start_remoteproc vendor_shell_exec:file { entrypoint rx_file_perms };
+allow vendor_start_remoteproc vendor_toolbox_exec:file rx_file_perms;
+allow vendor_start_remoteproc vendor_sysfs_remoteproc:dir r_dir_perms;
+allow vendor_start_remoteproc vendor_sysfs_remoteproc:file rw_file_perms;
+dontaudit vendor_start_remoteproc kernel:system syslog_read;

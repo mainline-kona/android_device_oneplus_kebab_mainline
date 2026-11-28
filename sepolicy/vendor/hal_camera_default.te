@@ -17,7 +17,19 @@ allow hal_camera_default vendor_synx_device:chr_file rw_file_perms;
 allow hal_camera_default dmabuf_system_heap_device:chr_file r_file_perms;
 allow hal_camera_default gpu_device:chr_file rw_file_perms;
 
-# Persistent camera data (/data/vendor/camera) and sysfs queries
+# Persistent camera data (/data/vendor/camera, /mnt/vendor/persist/camera) and sysfs/proc queries
 allow hal_camera_default vendor_camera_data_file:dir create_dir_perms;
 allow hal_camera_default vendor_camera_data_file:file create_file_perms;
+allow hal_camera_default mnt_vendor_file:dir search;
+allow hal_camera_default vendor_persist_camera_file:dir create_dir_perms;
+allow hal_camera_default vendor_persist_camera_file:file create_file_perms;
+allow hal_camera_default proc_meminfo:file r_file_perms;
 allow hal_camera_default sysfs:dir r_dir_perms;
+r_dir_file(hal_camera_default, vendor_sysfs_soc_info)
+
+# Sync fence fd passed from drm_hwcomposer / SurfaceFlinger
+allow hal_camera_default hal_graphics_composer_default:fd use;
+
+# CamX OPLUS camera properties & optional IDisplayConfig probe
+set_prop(hal_camera_default, vendor_camera_prop)
+dontaudit hal_camera_default default_android_hwservice:hwservice_manager find;

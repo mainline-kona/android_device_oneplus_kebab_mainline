@@ -1,3 +1,4 @@
 type vendor_goodix_fp_device, dev_type;
 type vendor_sg_device, dev_type;
 type vendor_synx_device, dev_type;
+type vendor_ssd_block_device, dev_type;

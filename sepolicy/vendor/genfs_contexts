@@ -3,6 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+# GPU & Display subsystem (Mesa Turnip / drm_hwcomposer / SurfaceFlinger uevent)
+genfscon sysfs /devices/platform/soc@0/3d00000.gpu			u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/platform/soc@0/ae00000.display-subsystem	u:object_r:sysfs_gpu:s0
+
 # Backlight
 genfscon sysfs /devices/platform/soc@0/ae00000.display-subsystem/ae94000.dsi/ae94000.dsi.0/backlight	u:object_r:vendor_sysfs_backlight:s0
 
@@ -23,11 +27,39 @@ genfscon sysfs /devices/platform/soc@0/c440000.spmi/spmi-0/0-02/c440000.spmi:pmi
 genfscon sysfs /devices/platform/soc@0/1d84000.ufshc/health_descriptor						u:object_r:vendor_sysfs_ufs:s0
 genfscon sysfs /devices/platform/soc@0/1d84000.ufshc/string_descriptors						u:object_r:vendor_sysfs_ufs:s0
 
-# Remoteproc sysfs (SLPI, CDSP, ADSP) for pd-mapper / tqftpserv / rmtfs
+# Remoteproc sysfs (SLPI, CDSP, ADSP, Modem) for pd-mapper / tqftpserv / rmtfs / start_remoteproc
 genfscon sysfs /class/remoteproc							u:object_r:vendor_sysfs_remoteproc:s0
 genfscon sysfs /devices/platform/soc@0/17300000.remoteproc/remoteproc			u:object_r:vendor_sysfs_remoteproc:s0
+genfscon sysfs /devices/platform/soc@0/17300000.remoteproc/modalias			u:object_r:vendor_sysfs_remoteproc:s0
 genfscon sysfs /devices/platform/soc@0/5c00000.remoteproc/remoteproc			u:object_r:vendor_sysfs_remoteproc:s0
+genfscon sysfs /devices/platform/soc@0/8300000.remoteproc/remoteproc			u:object_r:vendor_sysfs_remoteproc:s0
 genfscon sysfs /devices/platform/soc@0/9890000.remoteproc/remoteproc			u:object_r:vendor_sysfs_remoteproc:s0
+
+# Firmware loader search path (pd-mapper / tqftpserv)
+genfscon sysfs /module/firmware_class/parameters/path					u:object_r:vendor_sysfs_firmware_path:s0
+
+# PMIC RTC (vendor_timekeep)
+genfscon sysfs /devices/platform/soc@0/c440000.spmi/spmi-0/0-00/c440000.spmi:pmic@0:rtc@6000/rtc/rtc0	u:object_r:sysfs_rtc:s0
+
+# IIO sensors (hal_sensors_default)
+genfscon sysfs /bus/iio/devices										u:object_r:vendor_sysfs_iio:s0
+genfscon sysfs /devices/platform/soc@0/c440000.spmi/spmi-0/0-00/c440000.spmi:pmic@0:adc@3100		u:object_r:vendor_sysfs_iio:s0
+
+# Wakeup sources (system_suspend)
+genfscon sysfs /devices/platform/gpio-keys/wakeup												u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/17300000.remoteproc/wakeup										u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/5c00000.remoteproc/wakeup										u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/8300000.remoteproc/wakeup										u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/1c00000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/wakeup						u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/1c00000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/mhi1/wakeup						u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/1c10000.pcie/pci0002:00/0002:00:00.0/0002:01:00.0/wakeup						u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/1c10000.pcie/pci0002:00/0002:00:00.0/0002:01:00.0/mhi0/wakeup						u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/a6f8800.usb/wakeup											u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/a6f8800.usb/a600000.usb/wakeup										u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/ac0000.geniqup/a94000.i2c/i2c-13/13-004b/wakeup								u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/c440000.spmi/spmi-0/0-00/c440000.spmi:pmic@0:pon@800/c440000.spmi:pmic@0:pon@800:pwrkey/wakeup		u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/c440000.spmi/spmi-0/0-00/c440000.spmi:pmic@0:rtc@6000/wakeup						u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/soc@0:fingerprint/wakeup											u:object_r:sysfs_wakeup:s0
 
 # SDX55 raw-IP netdev (mhi_net on IP_HW0): netd sets its MTU via sysfs
 genfscon sysfs /devices/platform/soc@0/1c10000.pcie/pci0002:00/0002:00:00.0/0002:01:00.0/mhi0/mhi0_IP_HW0/net	u:object_r:sysfs_net:s0
@@ -38,3 +70,6 @@ genfscon sysfs /devices/virtual/thermal	u:object_r:sysfs_thermal:s0
 # GPU & UFS devfreq sysfs (Power HAL / libperfmgr)
 genfscon sysfs /devices/platform/soc@0/3d00000.gpu/devfreq/3d00000.gpu	u:object_r:vendor_sysfs_devfreq:s0
 genfscon sysfs /devices/platform/soc@0/1d84000.ufshc/devfreq/1d84000.ufshc	u:object_r:vendor_sysfs_devfreq:s0
+
+# Bringup /proc/last_kmsg
+genfscon proc /last_kmsg	u:object_r:vendor_proc_last_kmsg:s0

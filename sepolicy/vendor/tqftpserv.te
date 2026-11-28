@@ -1,2 +1,3 @@
 allow tqftpserv firmware_mnt_file:dir r_dir_perms;
 allow tqftpserv firmware_mnt_file:file r_file_perms;
+allow tqftpserv vendor_sysfs_firmware_path:file r_file_perms;

@@ -1,0 +1,7 @@
+#
+# Copyright (C) 2026 The PenguinOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# QTI Gralloc allocator reads /sys/devices/soc0/soc_id
+r_dir_file(hal_graphics_allocator_default, vendor_sysfs_soc_info)

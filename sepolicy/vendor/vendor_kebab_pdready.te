@@ -1,0 +1,30 @@
+#
+# Copyright (C) 2026 The PenguinOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+type vendor_kebab_pdready, domain;
+type vendor_kebab_pdready_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(vendor_kebab_pdready)
+
+allow vendor_kebab_pdready vendor_shell_exec:file rx_file_perms;
+allow vendor_kebab_pdready vendor_toolbox_exec:file rx_file_perms;
+allow vendor_kebab_pdready vendor_start_remoteproc_exec:file rx_file_perms;
+
+# Start SLPI/ADSP/CDSP remoteprocs and log to /dev/kmsg
+allow vendor_kebab_pdready vendor_sysfs_remoteproc:dir r_dir_perms;
+allow vendor_kebab_pdready vendor_sysfs_remoteproc:file rw_file_perms;
+allow vendor_kebab_pdready kmsg_device:chr_file rw_file_perms;
+set_prop(vendor_kebab_pdready, vendor_remoteproc_prop)
+set_prop(vendor_kebab_pdready, vendor_kebab_pdready_prop)
+
+# chown -R system:system /mnt/vendor/persist/sensors before SLPI boots
+allow vendor_kebab_pdready mnt_vendor_file:dir search;
+allow vendor_kebab_pdready vendor_persist_sensors_file:dir { r_dir_perms setattr };
+allow vendor_kebab_pdready vendor_persist_sensors_file:file { r_file_perms setattr };
+allow vendor_kebab_pdready self:capability { chown fowner };
+
+# Check /sys/class/net/wlan0
+allow vendor_kebab_pdready sysfs_net:dir r_dir_perms;
+dontaudit vendor_kebab_pdready kernel:system syslog_read;

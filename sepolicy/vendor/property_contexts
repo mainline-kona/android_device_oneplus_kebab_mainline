@@ -1,3 +1,9 @@
-persist.vendor.fingerprint.	u:object_r:vendor_fingerprint_prop:s0
-ro.vendor.fingerprint.		u:object_r:vendor_fingerprint_prop:s0
-vendor.gatekeeper.		u:object_r:vendor_gatekeeper_prop:s0
+persist.vendor.fingerprint.		u:object_r:vendor_fingerprint_prop:s0
+ro.vendor.fingerprint.			u:object_r:vendor_fingerprint_prop:s0
+vendor.fingerprint.			u:object_r:vendor_fingerprint_prop:s0
+vendor.gatekeeper.			u:object_r:vendor_gatekeeper_prop:s0
+persist.vendor.camera.			u:object_r:vendor_camera_prop:s0
+ro.vendor.oplus.camera.			u:object_r:vendor_camera_prop:s0
+vendor.sys.listeners.registered		u:object_r:vendor_tee_prop:s0 exact bool
+vendor.wlan.firmware.version		u:object_r:vendor_wlan_prop:s0 exact string
+vendor.kebab.pdready			u:object_r:vendor_kebab_pdready_prop:s0 exact int

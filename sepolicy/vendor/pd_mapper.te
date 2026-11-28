@@ -1,0 +1,6 @@
+#
+# Copyright (C) 2026 The PenguinOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+allow pd_mapper vendor_sysfs_firmware_path:file r_file_perms;

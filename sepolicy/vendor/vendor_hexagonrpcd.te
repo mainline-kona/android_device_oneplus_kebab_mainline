@@ -1,3 +1,6 @@
 # Allow hexagonrpcd-sdsp to write/rename SLPI sensor registry updates (e.g. devinfo.gsensor)
+# and read factory calibration under /mnt/vendor/persist/engineermode (cali_coe)
+allow vendor_hexagonrpcd mnt_vendor_file:dir search;
 allow vendor_hexagonrpcd vendor_persist_sensors_file:dir create_dir_perms;
 allow vendor_hexagonrpcd vendor_persist_sensors_file:file create_file_perms;
+r_dir_file(vendor_hexagonrpcd, vendor_persist_engineer_file)

@@ -3,3 +3,4 @@ allow hal_wifi_default self:netlink_generic_socket create_socket_perms_no_ioctl;
 allow hal_wifi_default self:netlink_route_socket create_socket_perms_no_ioctl;
 allow hal_wifi_default self:udp_socket create_socket_perms;
 allow hal_wifi_default self:capability { net_admin net_raw };
+set_prop(hal_wifi_default, vendor_wlan_prop)

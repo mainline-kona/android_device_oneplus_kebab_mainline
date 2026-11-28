@@ -117,6 +117,9 @@ on post-fs-data
     mkdir /data/vendor/tzstorage 0770 system system
     # Camera persistent cache / tuning / EEPROM directory
     mkdir /data/vendor/camera 0770 cameraserver camera
+    # NFC vendor config state directory
+    mkdir /data/vendor/nfc 0770 nfc nfc
+    restorecon_recursive /data/vendor/nfc
     # The X55 probes TFTP at ~11 s, before qcom-common's "boot" action runs.
     # Create /data/vendor/tmp/tqftpserv here (after installkey /data has set up
     # FBE in post-fs-data) so tqftpserv can serve /readwrite/ on first boot.
@@ -195,7 +198,7 @@ service vendor.kebab_pdready /vendor/bin/kebab-pdready.sh
 
 # DSPs start only after pd-mapper has published the protection-domain maps.
 # hexagonrpcd waits in-process for /dev/fastrpc-* so it attaches within 50ms of DSP boot.
-on property:sys.kebab.pdready=1
+on property:vendor.kebab.pdready=1
     trigger start_all_remoteproc
 
 on property:init.svc.vendor.tqftpserv=running

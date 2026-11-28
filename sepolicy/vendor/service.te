@@ -1,0 +1,6 @@
+#
+# Copyright (C) 2026 The PenguinOS Project
+# SPDX-License-Identifier: Apache-2.0
+#
+
+type hal_vendor_nxp_nxpnfc_service, hal_service_type, service_manager_type;
