@@ -129,6 +129,7 @@ on post-fs-data
 
 on post-fs
     mkdir /mnt/vendor/persist/klog 0775 root system
+    restorecon_recursive /mnt/vendor/persist/klog
     # SLPI sensor registry, served by hexagonrpcd-sdsp via hexagonrpcd-root/sensors/registry
     mkdir /mnt/vendor/persist/sensors 0775 system system
     mkdir /mnt/vendor/persist/sensors/registry 0775 system system
@@ -164,7 +165,7 @@ on post-fs
     # Load Titan 480 camera kernel module (includes synx) once /vendor/firmware
     # is mounted, wait for ueventd to create all V4L2 subdev nodes, then start
     # the HIDL 2.4 camera provider with libcamhidl_shim.
-    insmod /vendor/lib/modules/camera.ko
+    exec u:r:vendor_modprobe:s0 -- /vendor/bin/insmod /vendor/lib/modules/camera.ko
     wait /dev/v4l-subdev25 5
     start vendor.camera-provider-2-4
     # The external SDX55 is flashless: mhi-pci-generic stays bound and powers

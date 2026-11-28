@@ -20,9 +20,10 @@ set_prop(vendor_kebab_pdready, vendor_remoteproc_prop)
 set_prop(vendor_kebab_pdready, vendor_kebab_pdready_prop)
 
 # chown -R system:system /mnt/vendor/persist/sensors before SLPI boots
-allow vendor_kebab_pdready mnt_vendor_file:dir search;
+allow vendor_kebab_pdready mnt_vendor_file:dir { getattr search };
 allow vendor_kebab_pdready vendor_persist_sensors_file:dir { r_dir_perms setattr };
 allow vendor_kebab_pdready vendor_persist_sensors_file:file { r_file_perms setattr };
+allow vendor_kebab_pdready vendor_persist_sensors_file:fifo_file { getattr setattr };
 allow vendor_kebab_pdready self:capability { chown fowner };
 
 # Check /sys/class/net/wlan0

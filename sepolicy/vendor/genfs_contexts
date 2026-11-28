@@ -32,8 +32,11 @@ genfscon sysfs /class/remoteproc							u:object_r:vendor_sysfs_remoteproc:s0
 genfscon sysfs /devices/platform/soc@0/17300000.remoteproc/remoteproc			u:object_r:vendor_sysfs_remoteproc:s0
 genfscon sysfs /devices/platform/soc@0/17300000.remoteproc/modalias			u:object_r:vendor_sysfs_remoteproc:s0
 genfscon sysfs /devices/platform/soc@0/5c00000.remoteproc/remoteproc			u:object_r:vendor_sysfs_remoteproc:s0
+genfscon sysfs /devices/platform/soc@0/5c00000.remoteproc/modalias			u:object_r:vendor_sysfs_remoteproc:s0
 genfscon sysfs /devices/platform/soc@0/8300000.remoteproc/remoteproc			u:object_r:vendor_sysfs_remoteproc:s0
+genfscon sysfs /devices/platform/soc@0/8300000.remoteproc/modalias			u:object_r:vendor_sysfs_remoteproc:s0
 genfscon sysfs /devices/platform/soc@0/9890000.remoteproc/remoteproc			u:object_r:vendor_sysfs_remoteproc:s0
+genfscon sysfs /devices/platform/soc@0/9890000.remoteproc/modalias			u:object_r:vendor_sysfs_remoteproc:s0
 
 # Firmware loader search path (pd-mapper / tqftpserv)
 genfscon sysfs /module/firmware_class/parameters/path					u:object_r:vendor_sysfs_firmware_path:s0
@@ -44,6 +47,9 @@ genfscon sysfs /devices/platform/soc@0/c440000.spmi/spmi-0/0-00/c440000.spmi:pmi
 # IIO sensors (hal_sensors_default)
 genfscon sysfs /bus/iio/devices										u:object_r:vendor_sysfs_iio:s0
 genfscon sysfs /devices/platform/soc@0/c440000.spmi/spmi-0/0-00/c440000.spmi:pmic@0:adc@3100		u:object_r:vendor_sysfs_iio:s0
+genfscon sysfs /devices/platform/soc@0/c440000.spmi/spmi-0/0-02/c440000.spmi:pmic@2:adc@3100		u:object_r:vendor_sysfs_iio:s0
+genfscon sysfs /firmware/devicetree/base/soc@0/spmi@c440000/pmic@0/adc@3100				u:object_r:vendor_sysfs_iio:s0
+genfscon sysfs /firmware/devicetree/base/soc@0/spmi@c440000/pmic@2/adc@3100				u:object_r:vendor_sysfs_iio:s0
 
 # Wakeup sources (system_suspend)
 genfscon sysfs /devices/platform/gpio-keys/wakeup												u:object_r:sysfs_wakeup:s0
