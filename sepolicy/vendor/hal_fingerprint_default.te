@@ -16,3 +16,7 @@ allow hal_fingerprint_default vendor_persist_engineer_file:file create_file_perm
 get_prop(hal_fingerprint_default, vendor_fingerprint_prop)
 set_prop(hal_fingerprint_default, vendor_fingerprint_prop)
 get_prop(hal_fingerprint_default, vendor_tee_prop)
+
+# Stock Goodix libgf_hal tries to write diagnostic prop oplus.fingerprint.gf.package.version
+# (non-vendor prefix falls under default_prop, blocked by Treble neverallow).
+dontaudit hal_fingerprint_default default_prop:property_service set;

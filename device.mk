@@ -184,13 +184,14 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth_le.xml
 
-# Bluetooth system_ext properties (persist.bluetooth.* is bluetooth_prop,
+# Bluetooth & Radio system_ext properties (bluetooth_prop / radio_prop are
 # not writable by vendor_init)
 PRODUCT_SYSTEM_EXT_PROPERTIES += \
     persist.bluetooth.opus.enabled=true \
     persist.bluetooth.bqr.choppy_threshold=9,6 \
     persist.bluetooth.bqr.event_mask=0x8000000E \
-    persist.bluetooth.bqr.min_interval_ms=60000
+    persist.bluetooth.bqr.min_interval_ms=60000 \
+    persist.radio.is_vonr_enabled_0=true
 
 # QTEE / QSEECom (open-source external/qcomtee + kernel qcom_qseecom_bridge)
 # + stock qseecomd RPMB/storage listeners + hardware Keymaster 4.1 & Gatekeeper 1.0
