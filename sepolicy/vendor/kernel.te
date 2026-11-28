@@ -1,5 +1,12 @@
 allow kernel firmware_mnt_file:system firmware_load;
 
+# Allow sahara_mdm (kernel kworker) to serve SDX55 EFS / OEM NV / DDR partitions
+# via bdev_file_open_by_path() + kernel_read() during SBL modem boot.
+allow kernel block_device:dir search;
+allow kernel block_device:lnk_file read;
+allow kernel modem_block_device:blk_file r_file_perms;
+allow kernel unlabeled:blk_file read;
+
 # Bring-up klog_flush kworker attempts to snapshot last_kmsg to persist/metadata;
 # silence harmless audit spam under Enforcing (ramoops/pstore remains active).
 dontaudit kernel mnt_vendor_file:dir { add_name search write };
@@ -7,8 +14,6 @@ dontaudit kernel vendor_persist_klog_file:dir { add_name search write };
 dontaudit kernel vendor_persist_klog_file:file { create open write };
 dontaudit kernel metadata_file:dir { add_name search write };
 dontaudit kernel metadata_file:file { create open read write };
-dontaudit kernel block_device:dir search;
 dontaudit kernel proc:file { open read };
 dontaudit kernel self:capability dac_read_search;
 dontaudit kernel unlabeled:file { open read write };
-dontaudit kernel unlabeled:blk_file read;

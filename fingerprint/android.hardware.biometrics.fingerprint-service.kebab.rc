@@ -5,10 +5,9 @@ on init
     chmod 0660 /sys/kernel/oplus_display/notify_fppress
 
 # ABL passes androidboot.verifiedbootstate=orange without vbmeta.device_state;
-# Goodix HAL requires ro.boot.vbmeta.device_state=unlocked to load the
-# unlocked persist calibration blobs (gf_persist.so.unlocked / gf_cali_*.unlocked).
-on property:ro.boot.verifiedbootstate=orange
-    setprop ro.boot.vbmeta.device_state unlocked
+# androidboot.vbmeta.device_state=unlocked is passed via BOARD_KERNEL_CMDLINE
+# so first-stage init sets ro.boot.vbmeta.device_state=unlocked (required by
+# Goodix HAL to load gf_cali_*.unlocked) without vendor_init SELinux denials.
 
 on early-boot
     mkdir /data/vendor/fingerprint 0770 system system

@@ -9,12 +9,11 @@
 # Stock 2020-era camera blobs are 4K-aligned
 PRODUCT_CHECK_PREBUILT_MAX_PAGE_SIZE := false
 
-# Camera provider HAL (HIDL 2.4 legacy/0) + CPU OpenCL + HIDL mapper/postproc shim
+# Camera provider HAL (HIDL 2.4 legacy/0 with in-process mapper/postproc shim) + CPU OpenCL
 PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-impl \
-    android.hardware.camera.provider@2.4-service_64 \
-    libOpenCL_cpu \
-    libcamhidl_shim
+    android.hardware.camera.provider@2.4-service_64.kebab \
+    libOpenCL_cpu
 
 # Vendor compat libraries required by stock CamX / CHI / feature2 / ArcSoft blobs
 PRODUCT_PACKAGES += \

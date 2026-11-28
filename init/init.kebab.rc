@@ -254,16 +254,14 @@ service watchdogd /system/bin/watchdogd 10 20
     group root
     seclabel u:r:watchdogd:s0
 
-# Override camera provider@2.4-service_64 so it starts only after camera.ko is
-# loaded and preloads libcamhidl_shim.so (in-process IQtiMapper@3.0 + IPostProcService).
-service vendor.camera-provider-2-4 /vendor/bin/hw/android.hardware.camera.provider@2.4-service_64
-    override
+# Camera provider@2.4 legacy/0 service with in-process IQtiMapper@3.0 + IPostProcService
+# shim (compiled into the binary so AT_SECURE under SELinux Enforcing cannot strip it).
+service vendor.camera-provider-2-4 /vendor/bin/hw/android.hardware.camera.provider@2.4-service_64.kebab
     interface android.hardware.camera.provider@2.4::ICameraProvider legacy/0
     class hal
     user cameraserver
     group audio camera input drmrpc graphics
     ioprio rt 4
     capabilities SYS_NICE
-    setenv LD_PRELOAD /vendor/lib64/libcamhidl_shim.so
     task_profiles CameraServiceCapacity MaxPerformance
     disabled

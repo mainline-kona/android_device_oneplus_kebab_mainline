@@ -58,6 +58,13 @@
 /dev/block/platform/soc@0/1d84000\.ufshc/by-name/vm-linux_[ab]		u:object_r:bootloader_block_device:s0
 /dev/block/platform/soc@0/1d84000\.ufshc/by-name/vm-system_[ab]		u:object_r:bootloader_block_device:s0
 
+# External SDX55 modem Sahara partitions (read by kernel sahara_mdm during SBL boot)
+/dev/block/platform/soc@0/1d84000\.ufshc/by-name/mdm1m9kefs[123c]	u:object_r:modem_block_device:s0
+/dev/block/platform/soc@0/1d84000\.ufshc/by-name/mdm1oemnvbktmp		u:object_r:modem_block_device:s0
+/dev/block/platform/soc@0/1d84000\.ufshc/by-name/mdm_oem_dycnvbk	u:object_r:modem_block_device:s0
+/dev/block/platform/soc@0/1d84000\.ufshc/by-name/mdm_oem_stanvbk	u:object_r:modem_block_device:s0
+/dev/block/platform/soc@0/1d84000\.ufshc/by-name/mdmddr			u:object_r:modem_block_device:s0
+
 # Goodix optical UDFPS sensor
 /dev/goodix_fp		u:object_r:vendor_goodix_fp_device:s0
 
@@ -75,7 +82,7 @@
 # Camera (synx fence device, persistent cache, provider@2.4 binary)
 /dev/synx_device		u:object_r:vendor_synx_device:s0
 /data/vendor/camera(/.*)?	u:object_r:vendor_camera_data_file:s0
-/vendor/bin/hw/android\.hardware\.camera\.provider@2\.4-service_64	u:object_r:hal_camera_default_exec:s0
+/vendor/bin/hw/android\.hardware\.camera\.provider@2\.4-service_64(\.kebab)?	u:object_r:hal_camera_default_exec:s0
 
 # Telephony (external SDX55 over MHI)
 /vendor/bin/hw/libcuttlefish-rild	u:object_r:rild_exec:s0

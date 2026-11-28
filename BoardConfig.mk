@@ -47,6 +47,7 @@ BOARD_KERNEL_CMDLINE := \
     androidboot.fstab_suffix=kebab \
     androidboot.boot_devices=soc@0/1d84000.ufshc \
     androidboot.bootdevice=1d84000.ufshc \
+    androidboot.vbmeta.device_state=unlocked \
     androidboot.init_fatal_reboot_target=bootloader \
     msm.separate_gpu_kms=1
 
